@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext';
 import { Plus, Trash2, Save, X, Check, Clock, XCircle, Upload } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
-function OffForm({ employees, settings, onSave, onCancel }) {
+function OffForm({ employees, settings, shiftOptions, onSave, onCancel }) {
   const [empId, setEmpId] = useState(employees[0]?.id || '');
   const [type, setType] = useState('OFF');
   const [currentDate, setCurrentDate] = useState(`${settings.year}-${String(settings.month).padStart(2,'0')}-01`);
@@ -44,7 +44,7 @@ function OffForm({ employees, settings, onSave, onCancel }) {
             <label className="form-label">Leave Type</label>
             <select className="form-control" value={type}
               onChange={e => setType(e.target.value)}>
-              {settings.shiftOptions.filter(s => !['M','E','N'].includes(s.code)).map(s => (
+              {shiftOptions.filter(s => !['M','E','N'].includes(s.code)).map(s => (
                 <option key={s.code} value={s.code}>{s.label}</option>
               ))}
             </select>
@@ -90,7 +90,7 @@ function OffForm({ employees, settings, onSave, onCancel }) {
 
 export default function OffRequestsPage() {
   const { state, dispatch, toast } = useApp();
-  const { offRequests, employees, settings } = state;
+  const { offRequests, employees, settings, shiftOptions } = state;
   const [showForm, setShowForm] = useState(false);
 
   const approved = offRequests.filter(r => r.status === 'APPROVED').length;
@@ -231,11 +231,11 @@ export default function OffRequestsPage() {
                     <td>{req.date}</td>
                     <td>
                       <span style={{ 
-                        background: settings.shiftOptions.find(s => s.code === (req.type || 'OFF'))?.bg || '#ddd',
-                        color: settings.shiftOptions.find(s => s.code === (req.type || 'OFF'))?.color || '#000',
+                        background: shiftOptions.find(s => s.code === (req.type || 'OFF'))?.bg || '#ddd',
+                        color: shiftOptions.find(s => s.code === (req.type || 'OFF'))?.color || '#000',
                         padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600
                       }}>
-                        {settings.shiftOptions.find(s => s.code === (req.type || 'OFF'))?.label || 'Day Off'}
+                        {shiftOptions.find(s => s.code === (req.type || 'OFF'))?.label || 'Day Off'}
                       </span>
                     </td>
                     <td>
@@ -268,7 +268,13 @@ export default function OffRequestsPage() {
       </div>
 
       {showForm && (
-        <OffForm employees={employees} settings={settings} onSave={handleAdd} onCancel={() => setShowForm(false)} />
+        <OffForm
+          employees={employees}
+          settings={settings}
+          shiftOptions={shiftOptions}
+          onSave={handleAdd}
+          onCancel={() => setShowForm(false)}
+        />
       )}
     </div>
   );
