@@ -5,9 +5,7 @@ import { UserPlus, Trash2, Edit2, Save, X, Moon, UploadCloud } from 'lucide-reac
 import * as XLSX from 'xlsx';
 import { DAYS_OF_WEEK, DEPARTMENTS } from '../data/initialData';
 
-function EmployeeRow({ emp, nightGroup, shiftOptions, onEdit, onDelete }) {
-  const isNight = emp.nightGroup === nightGroup;
-  
+function EmployeeRow({ emp, shiftOptions, onEdit, onDelete }) {
   const getBadgeStyle = (code) => {
     const s = shiftOptions.find(opt => opt.code === code);
     if (!s) return { background: '#eee', color: '#333', padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 };
@@ -18,25 +16,14 @@ function EmployeeRow({ emp, nightGroup, shiftOptions, onEdit, onDelete }) {
       <td style={{ fontWeight: 600 }}>{emp.id}</td>
       <td>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {isNight && <Moon size={12} color="var(--purple-light)" />}
           <span>{emp.name}</span>
         </div>
       </td>
       <td>{emp.position}</td>
+      <td>{emp.floorNo || '-'}</td>
       <td>{emp.section}</td>
-      <td><span className={`badge-shift badge-${emp.skill}`}>{emp.skill}</span></td>
       <td><span style={getBadgeStyle(emp.defaultShift)}>{emp.defaultShift}</span></td>
       <td style={{ color: 'var(--text-secondary)' }}>{emp.weeklyOff}</td>
-      <td>
-        <span style={{
-          padding: '3px 10px', borderRadius: 20, fontWeight: 700, fontSize: 11,
-          background: isNight ? 'rgba(124,58,237,0.15)' : 'transparent',
-          color: isNight ? 'var(--purple-light)' : 'var(--text-muted)',
-          border: `1px solid ${isNight ? 'rgba(124,58,237,0.3)' : 'var(--border)'}`,
-        }}>
-          {isNight && '🌙 '}Group {emp.nightGroup}
-        </span>
-      </td>
       <td>
         <div style={{ display: 'flex', gap: 6 }}>
           <button className="btn btn-ghost btn-sm" onClick={() => onEdit(emp)}><Edit2 size={12} /></button>
@@ -49,8 +36,8 @@ function EmployeeRow({ emp, nightGroup, shiftOptions, onEdit, onDelete }) {
 
 function EmployeeForm({ initial, onSave, onCancel }) {
   const [form, setForm] = useState(initial || {
-    name: '', position: 'Room Attendant', section: 'Rooms',
-    skill: 'A', defaultShift: 'M', weeklyOff: 'Sunday', nightGroup: 'A',
+    name: '', position: 'Room Attendant', floorNo: '', section: 'Rooms',
+    defaultShift: 'M', weeklyOff: 'Sunday',
   });
 
   return (
@@ -75,21 +62,22 @@ function EmployeeForm({ initial, onSave, onCancel }) {
               <option>Team Leader</option>
               <option>Houseman</option>
               <option>Linen Attendant</option>
+              <option>Public Area Attendant</option>
+              <option>Laundry Attendant</option>
+              <option>Florist</option>
+              <option>Storekeeper</option>
+              <option>House Runner</option>
             </select>
           </div>
           <div className="form-group">
-            <label className="form-label">Section / Floor</label>
+            <label className="form-label">Floor No</label>
+            <input className="form-control" value={form.floorNo}
+              onChange={e => setForm(f => ({ ...f, floorNo: e.target.value }))} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Section / Dept</label>
             <input className="form-control" value={form.section}
               onChange={e => setForm(f => ({ ...f, section: e.target.value }))} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Skill Level</label>
-            <select className="form-control" value={form.skill}
-              onChange={e => setForm(f => ({ ...f, skill: e.target.value }))}>
-              <option value="A">A (Senior)</option>
-              <option value="B">B (Regular)</option>
-              <option value="C">C (Junior)</option>
-            </select>
           </div>
           <div className="form-group">
             <label className="form-label">Default Shift</label>
@@ -148,8 +136,8 @@ export default function EmployeesPage() {
             id: empId,
             name: empName,
             position: row['Position'] || 'Room Attendant',
-            section: row['Floor Section'] || row['Section'] || row['Department'] || 'Rooms',
-            skill: row['Skill Level'] || row['Skill'] || 'B',
+            floorNo: String(row['Floor No'] || row['Floor'] || ''),
+            section: row['Section'] || row['Department'] || 'Rooms',
             defaultShift: row['Default Shift'] || 'M',
             weeklyOff: row['Weekly Off'] || 'Sunday'
           });
@@ -214,31 +202,13 @@ export default function EmployeesPage() {
     }
   }
 
-  const byGroup = { A: 0, B: 0, C: 0 };
-  employees.forEach(e => byGroup[e.nightGroup]++);
-
   return (
     <div>
       {/* Summary */}
-      <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 20 }}>
+      <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(1, 1fr)', marginBottom: 20 }}>
         <div className="kpi-card blue">
           <div className="kpi-label">Total Employees</div>
           <div className="kpi-value">{employees.length}</div>
-        </div>
-        <div className="kpi-card purple">
-          <div className="kpi-label">Night Group A</div>
-          <div className="kpi-value">{byGroup.A}</div>
-          <div className="kpi-sub">{settings.nightGroup === 'A' ? '🌙 Active this month' : 'Resting'}</div>
-        </div>
-        <div className="kpi-card purple">
-          <div className="kpi-label">Night Group B</div>
-          <div className="kpi-value">{byGroup.B}</div>
-          <div className="kpi-sub">{settings.nightGroup === 'B' ? '🌙 Active this month' : 'Resting'}</div>
-        </div>
-        <div className="kpi-card purple">
-          <div className="kpi-label">Night Group C</div>
-          <div className="kpi-value">{byGroup.C}</div>
-          <div className="kpi-sub">{settings.nightGroup === 'C' ? '🌙 Active this month' : 'Resting'}</div>
         </div>
       </div>
 
@@ -262,11 +232,10 @@ export default function EmployeesPage() {
                 <th>Emp No</th>
                 <th>Name</th>
                 <th>Position</th>
+                <th>Floor No</th>
                 <th>Section</th>
-                <th>Skill</th>
                 <th>Default Shift</th>
                 <th>Weekly Off</th>
-                <th>Night Group</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -275,7 +244,6 @@ export default function EmployeesPage() {
                 <EmployeeRow
                   key={emp.id}
                   emp={emp}
-                  nightGroup={settings.nightGroup}
                   shiftOptions={shiftOptions}
                   onEdit={setEditEmp}
                   onDelete={handleDelete}
