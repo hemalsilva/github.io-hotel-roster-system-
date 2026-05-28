@@ -199,7 +199,7 @@ export default function RosterPage() {
     const worksheet = workbook.addWorksheet(`${monthName} ${year}`);
 
     // 1. Title Row
-    worksheet.mergeCells(1, 1, 1, numDays + 6);
+    worksheet.mergeCells(1, 1, 1, numDays + 7);
     const titleCell = worksheet.getCell(1, 1);
     titleCell.value = `${settings.department || 'Hotel'} Monthly Roster - ${monthName} ${year}`;
     titleCell.font = { size: 16, bold: true, color: { argb: 'FF1E293B' } };
@@ -207,36 +207,38 @@ export default function RosterPage() {
     titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
     worksheet.getRow(1).height = 30;
 
-    // 2. Headers Row 2 (Emp, Name, Section, Dates, Stats)
+    // 2. Headers Row 2 (Emp, Name, Section, Label, Dates, Stats)
     const r2 = worksheet.getRow(2);
-    r2.getCell(1).value = 'Emp No';
-    r2.getCell(2).value = 'Employee Name';
-    r2.getCell(3).value = 'Section';
-    for (let d = 1; d <= numDays; d++) r2.getCell(3 + d).value = d;
-    r2.getCell(numDays + 4).value = 'WD'; // Work Days
-    r2.getCell(numDays + 5).value = 'OFF'; // Off Days
-    r2.getCell(numDays + 6).value = 'N'; // Night Shifts
+    r2.getCell(1).value = 'EMP NO';
+    r2.getCell(2).value = 'NAME';
+    r2.getCell(3).value = 'SECTION';
+    r2.getCell(4).value = 'DATE';
+    for (let d = 1; d <= numDays; d++) r2.getCell(4 + d).value = d;
+    r2.getCell(numDays + 5).value = 'WD'; // Work Days
+    r2.getCell(numDays + 6).value = 'OFF'; // Off Days
+    r2.getCell(numDays + 7).value = 'N'; // Night Shifts
 
     // 3. Headers Row 3 (Day of Week)
     const r3 = worksheet.getRow(3);
+    r3.getCell(4).value = 'DAYS';
     for (let d = 1; d <= numDays; d++) {
-      r3.getCell(3 + d).value = getDayAbbr(year, month, d);
+      r3.getCell(4 + d).value = getDayAbbr(year, month, d).toUpperCase();
     }
 
     // Merge Header Cells
     worksheet.mergeCells(2, 1, 3, 1);
     worksheet.mergeCells(2, 2, 3, 2);
     worksheet.mergeCells(2, 3, 3, 3);
-    worksheet.mergeCells(2, numDays + 4, 3, numDays + 4);
     worksheet.mergeCells(2, numDays + 5, 3, numDays + 5);
     worksheet.mergeCells(2, numDays + 6, 3, numDays + 6);
+    worksheet.mergeCells(2, numDays + 7, 3, numDays + 7);
 
     // Style Headers (Rows 2 and 3)
     [2, 3].forEach(rowIdx => {
       const row = worksheet.getRow(rowIdx);
       row.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 10 };
       row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-        if (colNumber <= numDays + 6) {
+        if (colNumber <= numDays + 7) {
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
           cell.alignment = { horizontal: 'center', vertical: 'middle' };
           cell.border = {
@@ -253,10 +255,11 @@ export default function RosterPage() {
     worksheet.getColumn(1).width = 10;
     worksheet.getColumn(2).width = 25;
     worksheet.getColumn(3).width = 18; // Section width
-    for (let i = 4; i <= numDays + 3; i++) worksheet.getColumn(i).width = 5; // Dates
-    worksheet.getColumn(numDays + 4).width = 8;
+    worksheet.getColumn(4).width = 10; // Date/Days label
+    for (let i = 5; i <= numDays + 4; i++) worksheet.getColumn(i).width = 5; // Dates
     worksheet.getColumn(numDays + 5).width = 8;
     worksheet.getColumn(numDays + 6).width = 8;
+    worksheet.getColumn(numDays + 7).width = 8;
 
     // Build color map from shiftOptions
     const colorMap = {};
@@ -267,7 +270,7 @@ export default function RosterPage() {
       if (s.code === 'M') { bg = 'FFDBEAFE'; fontColor = 'FF1E3A8A'; }
       else if (s.code === 'E') { bg = 'FFFEF3C7'; fontColor = 'FF92400E'; }
       else if (s.code === 'N') { bg = 'FFEDE9FE'; fontColor = 'FF4C1D95'; }
-      else if (s.code === 'OFF') { bg = 'FFDCFCE7'; fontColor = 'FF166534'; }
+      else if (s.code === 'OFF') { bg = 'FFDC2626'; fontColor = 'FFFFFFFF'; } // Red bg, White font
       else if (s.code === 'AB') { bg = 'FFFFB8B8'; fontColor = 'FFDC2626'; }
       else {
         bg = rgbaToArgb(s.bg);
@@ -276,16 +279,24 @@ export default function RosterPage() {
       colorMap[s.code] = { bg, fontColor };
     });
 
+    const dailyAvailable = Array(numDays + 1).fill(0);
+    const dailyOff = Array(numDays + 1).fill(0);
+
     filteredEmployees.forEach(emp => {
-      const rowData = [emp.id, emp.name, emp.section];
-      for (let d = 1; d <= numDays; d++) rowData.push(roster[emp.id]?.[d] || '');
+      const rowData = [emp.id, emp.name, emp.section, ''];
+      for (let d = 1; d <= numDays; d++) {
+        const val = roster[emp.id]?.[d] || '';
+        rowData.push(val);
+        if (val === 'OFF') dailyOff[d]++;
+        else if (val && !['AB', 'AL', 'SL', 'HL', 'LL'].includes(val)) dailyAvailable[d]++;
+      }
       const s = stats[emp.id] || {};
       rowData.push(s.workDays || 0, s.offDays || 0, s.nightDays || 0);
       
       const row = worksheet.addRow(rowData);
 
       // Style cells
-      for (let d = 1; d <= numDays + 6; d++) {
+      for (let d = 1; d <= numDays + 7; d++) {
         const cell = row.getCell(d);
         
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -302,8 +313,8 @@ export default function RosterPage() {
         }
 
         // Apply colors to shift cells
-        if (d > 3 && d <= numDays + 3) {
-          const cellValue = roster[emp.id]?.[d - 3] || '';
+        if (d > 4 && d <= numDays + 4) {
+          const cellValue = roster[emp.id]?.[d - 4] || '';
           if (cellValue && colorMap[cellValue]) {
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colorMap[cellValue].bg } };
             cell.font = { color: { argb: colorMap[cellValue].fontColor }, bold: true, size: 10 };
@@ -312,6 +323,37 @@ export default function RosterPage() {
           }
         } else {
            cell.font = { size: 11 };
+        }
+      }
+    });
+
+    // Add Footer Rows
+    const availRowData = ['AVAILABLE EMPLOYEE COUNT', '', '', ''];
+    for (let d = 1; d <= numDays; d++) availRowData.push(dailyAvailable[d]);
+    const availRow = worksheet.addRow(availRowData);
+    
+    const offRowData = ['DAY OFF COUNT', '', '', ''];
+    for (let d = 1; d <= numDays; d++) offRowData.push(dailyOff[d]);
+    const offRow = worksheet.addRow(offRowData);
+
+    [availRow, offRow].forEach(row => {
+      worksheet.mergeCells(row.number, 1, row.number, 4);
+      const labelCell = row.getCell(1);
+      labelCell.font = { bold: true, color: { argb: 'FF000000' } };
+      labelCell.alignment = { horizontal: 'right', vertical: 'middle', padding: { right: 10 } };
+      labelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+
+      for (let d = 1; d <= numDays + 7; d++) {
+        const c = row.getCell(d);
+        c.border = {
+          top: { style: 'thin', color: { argb: 'FFDDDDDD' } },
+          left: { style: 'thin', color: { argb: 'FFDDDDDD' } },
+          bottom: { style: 'thin', color: { argb: 'FFDDDDDD' } },
+          right: { style: 'thin', color: { argb: 'FFDDDDDD' } }
+        };
+        if (d > 4 && d <= numDays + 4) {
+          c.font = { bold: true };
+          c.alignment = { horizontal: 'center', vertical: 'middle' };
         }
       }
     });
