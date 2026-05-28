@@ -1,4 +1,4 @@
-# AI Smart Hotel Roster System
+# Cinnamon Life HK Roster AI
 
 A web-based hotel roster management system with AI-powered smart scheduling.
 

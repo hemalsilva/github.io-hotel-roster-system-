@@ -39,8 +39,10 @@ export default function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-logo">
         <div className="logo-icon">🏨</div>
-        <h1>HotelRoster AI</h1>
-        <p>{settings.hotelName}</p>
+        <div>
+          <h1 style={{ fontSize: 16, margin: 0, fontWeight: 800, color: 'var(--primary)' }}>HK Roster AI</h1>
+          <p style={{ fontSize: 11, margin: 0, color: 'var(--text-secondary)' }}>{settings.hotelName}</p>
+        </div>
       </div>
 
       <nav className="sidebar-nav">

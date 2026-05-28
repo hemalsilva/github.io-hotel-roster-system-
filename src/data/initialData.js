@@ -34,7 +34,7 @@ export const DEFAULT_RULES = {
 };
 
 export const DEFAULT_SETTINGS = {
-  hotelName:      'GRAND ROYAL HOTEL',
+  hotelName:      'Cinnamon Life',
   department:     'HOUSEKEEPING',
   month:           6,
   year:            2026,
