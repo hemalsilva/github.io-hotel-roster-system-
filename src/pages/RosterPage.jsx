@@ -1,6 +1,6 @@
 // src/pages/RosterPage.jsx
 // ─── Main Roster Page with Manual Editing ───────────────
-import { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import {
   getDaysInMonth, getWeekdayIndex, getDayAbbr, validateRoster
@@ -113,6 +113,16 @@ export default function RosterPage() {
     : filterGroup === 'NIGHT'
     ? employees.filter(e => e.nightGroup === nightGroup)
     : employees.filter(e => e.nightGroup === filterGroup);
+
+  const activeNightEmps = filteredEmployees.filter(e => e.nightGroup === nightGroup || e.defaultShift === 'N');
+  const activeMorningEmps = filteredEmployees.filter(e => e.nightGroup !== nightGroup && e.defaultShift === 'M');
+  const activeEveningEmps = filteredEmployees.filter(e => e.nightGroup !== nightGroup && e.defaultShift === 'E');
+  
+  const shiftGroups = [
+    { label: 'Morning Shift', emps: activeMorningEmps, bg: 'rgba(59,130,246,0.1)', color: '#3b82f6' },
+    { label: 'Afternoon Shift', emps: activeEveningEmps, bg: 'rgba(245,158,11,0.1)', color: '#f59e0b' },
+    { label: 'Night Shift', emps: activeNightEmps, bg: 'rgba(124,58,237,0.1)', color: '#a78bfa' }
+  ];
 
   // Generate if not done
   function handleGenerate() {
@@ -311,56 +321,75 @@ export default function RosterPage() {
                 <th title="Night Shifts">N</th>
               </tr>
             </thead>
-            <tbody>
-              {filteredEmployees.map((emp, rowIdx) => {
-                const empStats = stats[emp.id] || {};
-                const isNightEmp = emp.nightGroup === nightGroup;
-                return (
-                  <tr key={emp.id}>
-                    <td className="name-cell">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        {isNightEmp && <span title="On Night Shift this month" style={{ fontSize: 10 }}>🌙</span>}
-                        <div>
-                          <div style={{ fontWeight: 500 }}>{emp.name}</div>
-                          <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-                            {emp.position} · Gr {emp.nightGroup}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    {Array.from({ length: numDays }, (_, i) => {
-                      const d = i + 1;
-                      const shift = roster[emp.id]?.[d] || '';
-                      const editKey = `${emp.id}-${d}`;
-                      const isManual = highlightManual && !!manualEdits[editKey];
-                      const bd = busyMap[d];
-                      return (
-                        <ShiftCell
-                          key={d}
-                          empId={emp.id}
-                          empName={emp.name}
-                          day={d}
-                          shift={shift}
-                          isManual={isManual}
-                          busyInfo={bd}
-                          onClick={handleCellClick}
-                        />
-                      );
-                    })}
-                    <td className="summary-cell">
-                      <span className="count-badge ok">{empStats.workDays || 0}</span>
-                    </td>
-                    <td className="summary-cell">
-                      <span className="count-badge ok">{empStats.offDays || 0}</span>
-                    </td>
-                    <td className="summary-cell">
-                      <span className={`count-badge ${isNightEmp ? 'warn' : 'ok'}`}>
-                        {empStats.nightDays || 0}
-                      </span>
+            {shiftGroups.map(group => {
+              if (group.emps.length === 0) return null;
+              return (
+                <tbody key={group.label}>
+                  <tr>
+                    <td colSpan={numDays + 4} style={{ 
+                      background: group.bg, color: group.color, 
+                      fontWeight: 800, padding: '8px 12px', fontSize: 12,
+                      textTransform: 'uppercase', letterSpacing: 1,
+                      borderTop: '2px solid var(--border)',
+                      borderBottom: '2px solid var(--border)',
+                      textAlign: 'left'
+                    }}>
+                      {group.label} — {group.emps.length} Staff
                     </td>
                   </tr>
-                );
-              })}
+                  {group.emps.map((emp, rowIdx) => {
+                    const empStats = stats[emp.id] || {};
+                    const isNightEmp = emp.nightGroup === nightGroup || emp.defaultShift === 'N';
+                    return (
+                      <tr key={emp.id}>
+                        <td className="name-cell">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            {isNightEmp && <span title="On Night Shift this month" style={{ fontSize: 10 }}>🌙</span>}
+                            <div>
+                              <div style={{ fontWeight: 500 }}>{emp.name}</div>
+                              <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+                                {emp.position} · Gr {emp.nightGroup}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        {Array.from({ length: numDays }, (_, i) => {
+                          const d = i + 1;
+                          const shift = roster[emp.id]?.[d] || '';
+                          const editKey = `${emp.id}-${d}`;
+                          const isManual = highlightManual && !!manualEdits[editKey];
+                          const bd = busyMap[d];
+                          return (
+                            <ShiftCell
+                              key={d}
+                              empId={emp.id}
+                              empName={emp.name}
+                              day={d}
+                              shift={shift}
+                              isManual={isManual}
+                              busyInfo={bd}
+                              onClick={handleCellClick}
+                            />
+                          );
+                        })}
+                        <td className="summary-cell">
+                          <span className="count-badge ok">{empStats.workDays || 0}</span>
+                        </td>
+                        <td className="summary-cell">
+                          <span className="count-badge ok">{empStats.offDays || 0}</span>
+                        </td>
+                        <td className="summary-cell">
+                          <span className={`count-badge ${isNightEmp ? 'warn' : 'ok'}`}>
+                            {empStats.nightDays || 0}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              );
+            })}
+            <tbody>
 
               {/* Daily On-Duty Count Row */}
               <tr className="summary-row">
