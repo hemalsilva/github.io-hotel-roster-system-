@@ -9,9 +9,9 @@ const STATUS_COLORS = {
   NO:      { bg: 'rgba(218,54,51,0.15)',  color: '#FF7B7B', icon: XCircle },
 };
 
-const LEAVE_TYPES = ['AL','CL','SL','HL','CO'];
-
-function LeaveForm({ employees, onSave, onCancel }) {
+function LeaveForm({ employees, shiftOptions, onSave, onCancel }) {
+  const leaveOptions = shiftOptions.filter(s => !['M','E','N','OFF'].includes(s.code));
+  
   const [form, setForm] = useState({
     empId: employees[0]?.id || '',
     date: '',
@@ -44,7 +44,7 @@ function LeaveForm({ employees, onSave, onCancel }) {
             <label className="form-label">Leave Type</label>
             <select className="form-control" value={form.type}
               onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
-              {LEAVE_TYPES.map(t => <option key={t}>{t}</option>)}
+              {leaveOptions.map(t => <option key={t.code} value={t.code}>{t.code} - {t.label}</option>)}
             </select>
           </div>
           <div className="form-group" style={{ gridColumn: '1 / -1' }}>
@@ -75,7 +75,7 @@ function LeaveForm({ employees, onSave, onCancel }) {
 
 export default function LeavesPage() {
   const { state, dispatch, toast } = useApp();
-  const { leaves, employees } = state;
+  const { leaves, employees, shiftOptions } = state;
   const [showForm, setShowForm] = useState(false);
 
   const approved = leaves.filter(l => l.status === 'YES').length;
@@ -136,13 +136,20 @@ export default function LeavesPage() {
             <tbody>
               {leaves.map(lv => {
                 const sc = STATUS_COLORS[lv.status] || STATUS_COLORS.PENDING;
+                const shiftOpt = shiftOptions.find(s => s.code === lv.type);
                 const Icon = sc.icon;
                 return (
                   <tr key={lv.id}>
                     <td style={{ color: 'var(--text-muted)' }}>{lv.empId}</td>
                     <td style={{ fontWeight: 500 }}>{lv.empName}</td>
                     <td style={{ color: 'var(--text-secondary)' }}>{lv.date}</td>
-                    <td><span className={`badge-shift badge-${lv.type}`}>{lv.type}</span></td>
+                    <td>
+                      <span style={{ 
+                        background: shiftOpt?.bg || '#eee', 
+                        color: shiftOpt?.color || '#333',
+                        padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 
+                      }}>{lv.type}</span>
+                    </td>
                     <td style={{ color: 'var(--text-muted)' }}>{lv.reason}</td>
                     <td>
                       <select
@@ -174,7 +181,7 @@ export default function LeavesPage() {
       </div>
 
       {showForm && (
-        <LeaveForm employees={employees} onSave={handleAdd} onCancel={() => setShowForm(false)} />
+        <LeaveForm employees={employees} shiftOptions={shiftOptions} onSave={handleAdd} onCancel={() => setShowForm(false)} />
       )}
     </div>
   );

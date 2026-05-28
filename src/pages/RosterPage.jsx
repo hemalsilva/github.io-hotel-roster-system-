@@ -5,7 +5,7 @@ import { useApp } from '../context/AppContext';
 import {
   getDaysInMonth, getWeekdayIndex, getDayAbbr, validateRoster
 } from '../utils/rosterEngine';
-import { SHIFT_OPTIONS } from '../data/initialData';
+
 import {
   Zap, Download, RefreshCw, AlertTriangle, CheckCircle,
   Edit3, Undo2, Filter, Eye, EyeOff, Info
@@ -13,7 +13,7 @@ import {
 import * as XLSX from 'xlsx';
 
 // ── Shift Dropdown (inline cell editor) ──────────────────
-function ShiftDropdown({ empId, empName, day, currentShift, position, onSelect, onClose, busyInfo }) {
+function ShiftDropdown({ empId, empName, day, currentShift, position, onSelect, onClose, busyInfo, shiftOptions }) {
   const [reason, setReason] = useState('');
 
   function handleSelect(code) {
@@ -44,7 +44,7 @@ function ShiftDropdown({ empId, empName, day, currentShift, position, onSelect, 
         )}
 
         <div className="dropdown-shifts">
-          {SHIFT_OPTIONS.map(s => (
+          {shiftOptions.map(s => (
             <button
               key={s.code}
               className={`dropdown-shift-btn ${currentShift === s.code ? 'active' : ''}`}
@@ -72,8 +72,8 @@ function ShiftDropdown({ empId, empName, day, currentShift, position, onSelect, 
 }
 
 // ── Shift Cell ────────────────────────────────────────────
-function ShiftCell({ empId, empName, day, shift, isManual, busyInfo, onClick }) {
-  const shiftColor = SHIFT_OPTIONS.find(s => s.code === shift);
+function ShiftCell({ empId, empName, day, shift, isManual, busyInfo, onClick, shiftOptions }) {
+  const shiftColor = shiftOptions.find(s => s.code === shift);
 
   return (
     <td style={{ padding: '2px', minWidth: 38 }}>
@@ -93,7 +93,7 @@ export default function RosterPage() {
   const { state, dispatch, toast } = useApp();
   const {
     employees, roster, stats, dailySummary, busyMap,
-    settings, rules, alerts, manualEdits, rosterGenerated
+    settings, rules, alerts, manualEdits, rosterGenerated, shiftOptions
   } = state;
 
   const [dropdown, setDropdown] = useState(null);
@@ -273,7 +273,7 @@ export default function RosterPage() {
         {/* Legend */}
         <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
           <div className="legend">
-            {SHIFT_OPTIONS.map(s => (
+            {shiftOptions.map(s => (
               <div key={s.code} className="legend-item">
                 <div className="legend-color" style={{ background: s.bg, border: `1px solid ${s.color}44` }} />
                 <span>{s.code} = {s.label}</span>
@@ -368,6 +368,7 @@ export default function RosterPage() {
                               shift={shift}
                               isManual={isManual}
                               busyInfo={bd}
+                              shiftOptions={shiftOptions}
                               onClick={handleCellClick}
                             />
                           );
@@ -464,6 +465,7 @@ export default function RosterPage() {
           currentShift={dropdown.currentShift}
           position={dropdown.position}
           busyInfo={busyMap[dropdown.day]}
+          shiftOptions={shiftOptions}
           onSelect={handleShiftSelect}
           onClose={() => setDropdown(null)}
         />

@@ -1,16 +1,42 @@
 // src/pages/SettingsPage.jsx
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Save, Moon, RotateCcw, Calendar, Settings, Sliders } from 'lucide-react';
+import { Save, Moon, RotateCcw, Calendar, Settings, Sliders, Palette, Plus, Trash2 } from 'lucide-react';
 
 const MONTHS = ['January','February','March','April','May','June',
                 'July','August','September','October','November','December'];
 
 export default function SettingsPage() {
   const { state, dispatch, toast } = useApp();
-  const { settings, rules } = state;
+  const { settings, rules, shiftOptions } = state;
   const [localSettings, setLocalSettings] = useState({ ...settings });
   const [localRules, setLocalRules] = useState({ ...rules });
+  const [localShifts, setLocalShifts] = useState([ ...shiftOptions ]);
+
+  function handleSaveShifts() {
+    dispatch({ type: 'UPDATE_SHIFT_OPTIONS', payload: localShifts });
+    toast('Shift & Leave types saved!', 'success');
+  }
+
+  function handleAddShift() {
+    setLocalShifts([...localShifts, { code: 'NEW', label: 'New Leave', color: '#FFFFFF', bg: 'rgba(255,255,255,0.15)' }]);
+  }
+
+  function handleUpdateShift(index, field, value) {
+    const updated = [...localShifts];
+    updated[index][field] = value;
+    setLocalShifts(updated);
+  }
+
+  function handleDeleteShift(index) {
+    if (['M','E','N','OFF'].includes(localShifts[index].code)) {
+      toast('Cannot delete core shifts!', 'danger');
+      return;
+    }
+    const updated = [...localShifts];
+    updated.splice(index, 1);
+    setLocalShifts(updated);
+  }
 
   function handleSaveSettings() {
     dispatch({ type: 'UPDATE_SETTINGS', payload: localSettings });
@@ -212,6 +238,69 @@ export default function SettingsPage() {
         <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
           <button className="btn btn-primary" onClick={handleSaveRules}>
             <Save size={14} /> Save Rules
+          </button>
+        </div>
+      </div>
+
+      {/* Leave Types & Colors */}
+      <div className="card">
+        <div className="card-header">
+          <div className="card-title"><Palette size={16} /> Shift & Leave Types</div>
+          <button className="btn btn-primary btn-sm" onClick={handleAddShift}>
+            <Plus size={14} /> Add New
+          </button>
+        </div>
+
+        <div className="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Label</th>
+                <th>Text Color</th>
+                <th>Background</th>
+                <th>Preview</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {localShifts.map((s, idx) => {
+                const isBase = ['M','E','N','OFF'].includes(s.code);
+                return (
+                  <tr key={idx}>
+                    <td>
+                      <input className="form-control" style={{ width: 80 }} value={s.code} disabled={isBase} onChange={e => handleUpdateShift(idx, 'code', e.target.value)} />
+                    </td>
+                    <td>
+                      <input className="form-control" value={s.label} onChange={e => handleUpdateShift(idx, 'label', e.target.value)} />
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                        <input type="color" value={s.color} onChange={e => handleUpdateShift(idx, 'color', e.target.value)} style={{ width: 30, height: 30, padding: 0, border: 'none', background: 'transparent' }} />
+                        <input className="form-control" style={{ width: 80, fontSize: 11 }} value={s.color} onChange={e => handleUpdateShift(idx, 'color', e.target.value)} />
+                      </div>
+                    </td>
+                    <td>
+                      <input className="form-control" value={s.bg} onChange={e => handleUpdateShift(idx, 'bg', e.target.value)} />
+                    </td>
+                    <td>
+                      <span style={{ background: s.bg, color: s.color, padding: '4px 8px', borderRadius: 4, fontWeight: 'bold', fontSize: 11 }}>{s.code}</span>
+                    </td>
+                    <td>
+                      {!isBase && (
+                        <button className="btn btn-danger btn-sm" onClick={() => handleDeleteShift(idx)}><Trash2 size={12} /></button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
+          <button className="btn btn-primary" onClick={handleSaveShifts}>
+            <Save size={14} /> Save Shift Types
           </button>
         </div>
       </div>

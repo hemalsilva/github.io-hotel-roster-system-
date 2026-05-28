@@ -2,13 +2,14 @@
 import { createContext, useContext, useReducer, useCallback } from 'react';
 import {
   DEFAULT_EMPLOYEES, DEFAULT_LEAVES, DEFAULT_OFF_REQUESTS,
-  DEFAULT_BUSY_DAYS, DEFAULT_SETTINGS, DEFAULT_RULES
+  DEFAULT_BUSY_DAYS, DEFAULT_SETTINGS, DEFAULT_RULES, SHIFT_OPTIONS
 } from '../data/initialData';
 import { generateRoster, validateRoster, getDailySummary, getDaysInMonth } from '../utils/rosterEngine';
 
 const AppContext = createContext(null);
 
 const initialState = {
+  shiftOptions: SHIFT_OPTIONS,
   employees:    DEFAULT_EMPLOYEES,
   leaves:       DEFAULT_LEAVES,
   offRequests:  DEFAULT_OFF_REQUESTS,
@@ -38,6 +39,9 @@ function reducer(state, action) {
 
     case 'UPDATE_RULES':
       return { ...state, rules: { ...state.rules, ...action.payload } };
+
+    case 'UPDATE_SHIFT_OPTIONS':
+      return { ...state, shiftOptions: action.payload };
 
     case 'SET_EMPLOYEES':
       return { ...state, employees: action.payload };

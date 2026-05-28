@@ -5,7 +5,13 @@ import * as XLSX from 'xlsx';
 
 export default function EditLogPage() {
   const { state, dispatch, toast } = useApp();
-  const { editLog, manualEdits } = state;
+  const { editLog, manualEdits, shiftOptions } = state;
+
+  const getBadgeStyle = (code) => {
+    const s = shiftOptions.find(opt => opt.code === code);
+    if (!s) return { background: '#eee', color: '#333', padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 };
+    return { background: s.bg, color: s.color, padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 };
+  };
 
   function handleClearLog() {
     if (confirm('Clear all manual edits and regenerate roster?')) {
@@ -84,12 +90,12 @@ export default function EditLogPage() {
                     <td style={{ fontWeight: 500 }}>{entry.empName}</td>
                     <td style={{ fontWeight: 600 }}>Day {entry.day}</td>
                     <td>
-                      <span className={`badge-shift badge-${entry.oldShift}`}>
+                      <span style={getBadgeStyle(entry.oldShift)}>
                         {entry.oldShift || '—'}
                       </span>
                     </td>
                     <td>
-                      <span className={`badge-shift badge-${entry.newShift}`}>
+                      <span style={getBadgeStyle(entry.newShift)}>
                         {entry.newShift}
                       </span>
                     </td>
@@ -123,9 +129,9 @@ export default function EditLogPage() {
                   {edit.empName} — Day {edit.day}
                 </div>
                 <div style={{ color: 'var(--text-muted)' }}>
-                  <span className={`badge-shift badge-${edit.oldShift}`}>{edit.oldShift}</span>
+                  <span style={getBadgeStyle(edit.oldShift)}>{edit.oldShift}</span>
                   {' → '}
-                  <span className={`badge-shift badge-${edit.newShift}`}>{edit.newShift}</span>
+                  <span style={getBadgeStyle(edit.newShift)}>{edit.newShift}</span>
                 </div>
                 {edit.reason && (
                   <div style={{ color: 'var(--text-muted)', marginTop: 2, fontStyle: 'italic' }}>

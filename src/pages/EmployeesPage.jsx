@@ -5,8 +5,14 @@ import { UserPlus, Trash2, Edit2, Save, X, Moon, UploadCloud } from 'lucide-reac
 import * as XLSX from 'xlsx';
 import { DAYS_OF_WEEK } from '../data/initialData';
 
-function EmployeeRow({ emp, nightGroup, onEdit, onDelete }) {
+function EmployeeRow({ emp, nightGroup, shiftOptions, onEdit, onDelete }) {
   const isNight = emp.nightGroup === nightGroup;
+  
+  const getBadgeStyle = (code) => {
+    const s = shiftOptions.find(opt => opt.code === code);
+    if (!s) return { background: '#eee', color: '#333', padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 };
+    return { background: s.bg, color: s.color, padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 };
+  };
   return (
     <tr>
       <td style={{ fontWeight: 600 }}>{emp.id}</td>
@@ -19,7 +25,7 @@ function EmployeeRow({ emp, nightGroup, onEdit, onDelete }) {
       <td>{emp.position}</td>
       <td>{emp.section}</td>
       <td><span className={`badge-shift badge-${emp.skill}`}>{emp.skill}</span></td>
-      <td><span className={`badge-shift badge-${emp.defaultShift}`}>{emp.defaultShift}</span></td>
+      <td><span style={getBadgeStyle(emp.defaultShift)}>{emp.defaultShift}</span></td>
       <td style={{ color: 'var(--text-secondary)' }}>{emp.weeklyOff}</td>
       <td>
         <span style={{
@@ -124,7 +130,7 @@ function EmployeeForm({ initial, onSave, onCancel }) {
 
 export default function EmployeesPage() {
   const { state, dispatch, toast } = useApp();
-  const { employees, settings } = state;
+  const { employees, settings, shiftOptions } = state;
   const [showForm, setShowForm] = useState(false);
   const [editEmp, setEditEmp] = useState(null);
 
@@ -246,6 +252,7 @@ export default function EmployeesPage() {
                   key={emp.id}
                   emp={emp}
                   nightGroup={settings.nightGroup}
+                  shiftOptions={shiftOptions}
                   onEdit={setEditEmp}
                   onDelete={handleDelete}
                 />
