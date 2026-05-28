@@ -1,7 +1,8 @@
 // src/pages/EmployeesPage.jsx
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { UserPlus, Trash2, Edit2, Save, X, Moon } from 'lucide-react';
+import { UserPlus, Trash2, Edit2, Save, X, Moon, UploadCloud } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { DAYS_OF_WEEK } from '../data/initialData';
 
 function EmployeeRow({ emp, nightGroup, onEdit, onDelete }) {
@@ -127,6 +128,42 @@ export default function EmployeesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editEmp, setEditEmp] = useState(null);
 
+  function handleFileUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+        
+        const newEmps = data.map(row => ({
+          name: row['Employee Name'] || row['Name'] || 'Unknown',
+          position: row['Position'] || 'Room Attendant',
+          section: row['Section'] || 'HK',
+          skill: row['Skill Level'] || row['Skill'] || 'B',
+          defaultShift: row['Default Shift'] || 'M',
+          weeklyOff: row['Weekly Off'] || 'Sunday',
+          nightGroup: row['Night Group'] || 'A'
+        }));
+
+        if (newEmps.length > 0) {
+          dispatch({ type: 'BULK_ADD_EMPLOYEES', payload: newEmps });
+          toast(`Successfully uploaded ${newEmps.length} employees!`, 'success');
+        } else {
+          toast('No data found in Excel file', 'warning');
+        }
+      } catch (err) {
+        toast('Error parsing Excel file', 'danger');
+      }
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = ''; // Reset input
+  }
+
   function handleAdd(form) {
     dispatch({ type: 'ADD_EMPLOYEE', payload: form });
     setShowForm(false);
@@ -178,9 +215,15 @@ export default function EmployeesPage() {
       <div className="card">
         <div className="card-header">
           <div className="card-title">👥 Employee Master List</div>
-          <button className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}>
-            <UserPlus size={14} /> Add Employee
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <label className="btn btn-ghost btn-sm" style={{ cursor: 'pointer', margin: 0 }}>
+              <UploadCloud size={14} /> Bulk Upload (Excel)
+              <input type="file" accept=".xlsx, .xls" style={{ display: 'none' }} onChange={handleFileUpload} />
+            </label>
+            <button className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}>
+              <UserPlus size={14} /> Add Employee
+            </button>
+          </div>
         </div>
         <div className="table-wrapper">
           <table>

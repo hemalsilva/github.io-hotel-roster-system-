@@ -47,6 +47,13 @@ function reducer(state, action) {
       return { ...state, employees: [...state.employees, newEmp] };
     }
 
+    case 'BULK_ADD_EMPLOYEES': {
+      // payload should be an array of employee objects
+      const maxId = state.employees.length > 0 ? Math.max(...state.employees.map(e => e.id)) : 1000;
+      const newEmployees = action.payload.map((emp, i) => ({ ...emp, id: maxId + 1 + i }));
+      return { ...state, employees: [...state.employees, ...newEmployees] };
+    }
+
     case 'UPDATE_EMPLOYEE': {
       const updated = state.employees.map(e =>
         e.id === action.payload.id ? { ...e, ...action.payload } : e
