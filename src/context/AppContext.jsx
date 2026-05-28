@@ -111,6 +111,12 @@ function reducer(state, action) {
     case 'DELETE_OFF_REQUEST':
       return { ...state, offRequests: state.offRequests.filter(r => r.id !== action.payload) };
 
+    case 'BULK_ADD_OFF_REQUESTS': {
+      const maxId = state.offRequests.length > 0 ? Math.max(...state.offRequests.map(e => e.id)) : Date.now();
+      const newOffRequests = action.payload.map((req, i) => ({ ...req, id: maxId + 1 + i }));
+      return { ...state, offRequests: [...state.offRequests, ...newOffRequests] };
+    }
+
     case 'ADD_BUSY_DAY': {
       const newBd = { ...action.payload, id: Date.now() };
       return { ...state, busyDays: [...state.busyDays, newBd] };

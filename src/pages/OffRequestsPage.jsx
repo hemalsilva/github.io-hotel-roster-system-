@@ -1,7 +1,8 @@
 // src/pages/OffRequestsPage.jsx
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Plus, Trash2, Save, X, Check, Clock, XCircle } from 'lucide-react';
+import { Plus, Trash2, Save, X, Check, Clock, XCircle, Upload } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 function OffForm({ employees, settings, onSave, onCancel }) {
   const [form, setForm] = useState({
@@ -76,6 +77,56 @@ export default function OffRequestsPage() {
     }
   }
 
+  function handleFileUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+        
+        const newRequests = [];
+        data.forEach(row => {
+          const empId = Number(row['Emp No']);
+          const empName = row['Name'] || row['Employee Name'] || 'Unknown';
+          const datesRaw = row['Requested Dates'] || row['Requested Date'] || row['Date'] || '';
+          
+          if (!empId || !datesRaw) return;
+          
+          const dates = String(datesRaw).split(',').map(d => d.trim()).filter(Boolean);
+          dates.forEach(d => {
+            let parsedDate = d;
+            if (!isNaN(d) && Number(d) > 30000) {
+              const dateObj = new Date(Math.round((d - 25569) * 864e5));
+              parsedDate = dateObj.toISOString().split('T')[0];
+            }
+            newRequests.push({
+              empId,
+              empName,
+              date: parsedDate,
+              status: 'APPROVED' // Default bulk uploads to APPROVED
+            });
+          });
+        });
+
+        if (newRequests.length > 0) {
+          dispatch({ type: 'BULK_ADD_OFF_REQUESTS', payload: newRequests });
+          toast(`Successfully uploaded ${newRequests.length} off requests!`, 'success');
+        } else {
+          toast('No valid data found in Excel file', 'warning');
+        }
+      } catch (err) {
+        toast('Error parsing Excel file', 'danger');
+      }
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = ''; // Reset input
+  }
+
   const STATUS_STYLE = {
     APPROVED: { bg: 'rgba(46,160,67,0.15)',  color: '#56D364' },
     PENDING:  { bg: 'rgba(210,153,34,0.15)', color: '#E8B63A' },
@@ -102,9 +153,15 @@ export default function OffRequestsPage() {
       <div className="card">
         <div className="card-header">
           <div className="card-title">🗓️ Employee Off Day Requests</div>
-          <button className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}>
-            <Plus size={14} /> Add Request
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <label className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Upload size={14} /> Upload Excel
+              <input type="file" accept=".xlsx, .xls" style={{ display: 'none' }} onChange={handleFileUpload} />
+            </label>
+            <button className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}>
+              <Plus size={14} /> Add Request
+            </button>
+          </div>
         </div>
         <div className="table-wrapper">
           <table>
