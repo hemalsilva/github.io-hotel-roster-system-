@@ -13,6 +13,7 @@ export const SHIFT_OPTIONS = [
   { code: 'SL',  label: 'Sick Leave',color:'#DB2777', bg: 'rgba(219,39,119,0.15)'},
   { code: 'HL',  label: 'Half Day', color: '#F59E0B', bg: 'rgba(245,158,11,0.12)' },
   { code: 'LL',  label: 'Lieu leave', color:'#6366F1', bg: 'rgba(99,102,241,0.12)' },
+  { code: 'AB',  label: 'Absent',     color: '#FFFFFF', bg: 'rgba(220,38,38,0.6)' },
 ];
 
 export const NIGHT_GROUPS = ['A', 'B', 'C'];
