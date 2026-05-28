@@ -5,35 +5,62 @@ import { Plus, Trash2, Save, X, Check, Clock, XCircle, Upload } from 'lucide-rea
 import * as XLSX from 'xlsx';
 
 function OffForm({ employees, settings, onSave, onCancel }) {
-  const [form, setForm] = useState({
-    empId: employees[0]?.id || '',
-    date: `${settings.year}-${String(settings.month).padStart(2,'0')}-01`,
-    status: 'PENDING',
-  });
+  const [empId, setEmpId] = useState(employees[0]?.id || '');
+  const [currentDate, setCurrentDate] = useState(`${settings.year}-${String(settings.month).padStart(2,'0')}-01`);
+  const [dates, setDates] = useState([]);
+  const [status, setStatus] = useState('PENDING');
+
+  const handleAddDate = () => {
+    if (currentDate && !dates.includes(currentDate)) {
+      setDates([...dates, currentDate].sort());
+    }
+  };
+
+  const handleRemoveDate = (d) => {
+    setDates(dates.filter(dt => dt !== d));
+  };
+
+  const handleSubmit = () => {
+    onSave({ empId, dates, status });
+  };
+
   return (
     <div className="modal-overlay">
-      <div className="modal">
+      <div className="modal" style={{ maxWidth: 450 }}>
         <div className="modal-header">
-          <div className="modal-title">Add Off Request</div>
+          <div className="modal-title">Add Off Requests</div>
           <button className="btn btn-ghost btn-sm" onClick={onCancel}><X size={14} /></button>
         </div>
         <div className="form-grid">
           <div className="form-group" style={{ gridColumn: '1/-1' }}>
             <label className="form-label">Employee</label>
-            <select className="form-control" value={form.empId}
-              onChange={e => setForm(f => ({ ...f, empId: Number(e.target.value) }))}>
+            <select className="form-control" value={empId}
+              onChange={e => setEmpId(Number(e.target.value))}>
               {employees.map(e => <option key={e.id} value={e.id}>{e.id} — {e.name}</option>)}
             </select>
           </div>
-          <div className="form-group">
-            <label className="form-label">Requested Off Date</label>
-            <input className="form-control" type="date" value={form.date}
-              onChange={e => setForm(f => ({ ...f, date: e.target.value }))} />
+          <div className="form-group" style={{ gridColumn: '1/-1' }}>
+            <label className="form-label">Select Date & Add</label>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+              <input className="form-control" type="date" value={currentDate}
+                onChange={e => setCurrentDate(e.target.value)} />
+              <button className="btn btn-secondary" onClick={handleAddDate}>Add</button>
+            </div>
+            
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, minHeight: 32 }}>
+              {dates.map(d => (
+                <span key={d} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', padding: '4px 8px', borderRadius: 4, fontSize: 12, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-primary)' }}>
+                  {d}
+                  <X size={12} style={{ cursor: 'pointer', color: 'var(--danger)' }} onClick={() => handleRemoveDate(d)} />
+                </span>
+              ))}
+              {dates.length === 0 && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>No dates added yet</span>}
+            </div>
           </div>
-          <div className="form-group">
+          <div className="form-group" style={{ gridColumn: '1/-1' }}>
             <label className="form-label">Status</label>
-            <select className="form-control" value={form.status}
-              onChange={e => setForm(f => ({ ...f, status: e.target.value }))}>
+            <select className="form-control" value={status}
+              onChange={e => setStatus(e.target.value)}>
               <option value="PENDING">PENDING</option>
               <option value="APPROVED">APPROVED</option>
               <option value="REJECTED">REJECTED</option>
@@ -42,8 +69,8 @@ function OffForm({ employees, settings, onSave, onCancel }) {
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
           <button className="btn btn-ghost" onClick={onCancel}>Cancel</button>
-          <button className="btn btn-primary" onClick={() => form.date && onSave(form)}>
-            <Save size={14} /> Add Request
+          <button className="btn btn-primary" onClick={handleSubmit}>
+            <Save size={14} /> Add {dates.length > 0 ? dates.length : ''} Request(s)
           </button>
         </div>
       </div>
@@ -59,10 +86,20 @@ export default function OffRequestsPage() {
   const approved = offRequests.filter(r => r.status === 'APPROVED').length;
   const pending  = offRequests.filter(r => r.status === 'PENDING').length;
 
-  function handleAdd(form) {
-    dispatch({ type: 'ADD_OFF_REQUEST', payload: form });
+  function handleAdd({ empId, dates, status }) {
+    if (dates.length === 0) {
+      toast('Please add at least one date', 'warning');
+      return;
+    }
+    const newRequests = dates.map(d => ({
+      empId,
+      date: d,
+      status,
+      empName: employees.find(e => e.id === Number(empId))?.name || 'Unknown'
+    }));
+    dispatch({ type: 'BULK_ADD_OFF_REQUESTS', payload: newRequests });
     setShowForm(false);
-    toast('Off request added!', 'success');
+    toast(`Added ${dates.length} off request(s)!`, 'success');
   }
 
   function handleStatus(id, status) {
