@@ -78,11 +78,9 @@ function EmployeeForm({ initial, onSave, onCancel }) {
             </select>
           </div>
           <div className="form-group">
-            <label className="form-label">Section / Department</label>
-            <select className="form-control" value={form.section}
-              onChange={e => setForm(f => ({ ...f, section: e.target.value }))}>
-              {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
-            </select>
+            <label className="form-label">Section / Floor</label>
+            <input className="form-control" value={form.section}
+              onChange={e => setForm(f => ({ ...f, section: e.target.value }))} />
           </div>
           <div className="form-group">
             <label className="form-label">Skill Level</label>
@@ -148,21 +146,55 @@ export default function EmployeesPage() {
         const ws = wb.Sheets[wsname];
         const data = XLSX.utils.sheet_to_json(ws);
         
-        const newEmps = data.map(row => ({
-          name: row['Employee Name'] || row['Name'] || 'Unknown',
-          position: row['Position'] || 'Room Attendant',
-          section: row['Section'] || row['Department'] || 'Rooms',
-          skill: row['Skill Level'] || row['Skill'] || 'B',
-          defaultShift: row['Default Shift'] || 'M',
-          weeklyOff: row['Weekly Off'] || 'Sunday',
-          nightGroup: row['Night Group'] || 'A'
-        }));
+        const newEmps = [];
+        const newOffRequests = [];
+        
+        data.forEach(row => {
+          const empId = Number(row['Emp No']) || Math.floor(Math.random() * 10000);
+          const empName = row['Employee Name'] || row['Name'] || 'Unknown';
+          
+          newEmps.push({
+            id: empId,
+            name: empName,
+            position: row['Position'] || 'Room Attendant',
+            section: row['Floor Section'] || row['Section'] || row['Department'] || 'Rooms',
+            skill: row['Skill Level'] || row['Skill'] || 'B',
+            defaultShift: row['Default Shift'] || 'M',
+            weeklyOff: row['Weekly Off'] || 'Sunday',
+            nightGroup: row['Night Group'] || 'A'
+          });
+
+          const offReqsRaw = row['Day off Request'] || row['Off Requests'] || row['Requested Dates'];
+          if (offReqsRaw) {
+            const dates = String(offReqsRaw).split(',').map(d => d.trim()).filter(Boolean);
+            dates.forEach(d => {
+              let parsedDate = d;
+              if (!isNaN(d) && Number(d) > 30000) {
+                const dateObj = new Date(Math.round((d - 25569) * 864e5));
+                parsedDate = dateObj.toISOString().split('T')[0];
+              }
+              newOffRequests.push({
+                empId,
+                empName,
+                date: parsedDate,
+                status: 'APPROVED'
+              });
+            });
+          }
+        });
 
         if (newEmps.length > 0) {
           dispatch({ type: 'BULK_ADD_EMPLOYEES', payload: newEmps });
           toast(`Successfully uploaded ${newEmps.length} employees!`, 'success');
         } else {
           toast('No data found in Excel file', 'warning');
+        }
+
+        if (newOffRequests.length > 0) {
+          setTimeout(() => {
+            dispatch({ type: 'BULK_ADD_OFF_REQUESTS', payload: newOffRequests });
+            toast(`Automatically added ${newOffRequests.length} off requests!`, 'success');
+          }, 500);
         }
       } catch (err) {
         toast('Error parsing Excel file', 'danger');

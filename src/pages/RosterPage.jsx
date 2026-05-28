@@ -125,7 +125,9 @@ export default function RosterPage() {
   }
 
   const activeNightEmps = filteredEmployees.filter(e => e.nightGroup === nightGroup || e.defaultShift === 'N');
-  const activeMorningEmps = filteredEmployees.filter(e => e.nightGroup !== nightGroup && e.defaultShift === 'M');
+  const activeMorningEmps = filteredEmployees
+    .filter(e => e.nightGroup !== nightGroup && e.defaultShift === 'M')
+    .sort((a, b) => a.section.localeCompare(b.section, undefined, { numeric: true }));
   const activeEveningEmps = filteredEmployees.filter(e => e.nightGroup !== nightGroup && e.defaultShift === 'E');
   
   const shiftGroups = [
