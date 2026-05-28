@@ -228,6 +228,9 @@ function reducer(state, action) {
     case 'REMOVE_TOAST':
       return { ...state, toasts: state.toasts.filter(t => t.id !== action.payload) };
 
+    case 'RESTORE_BACKUP':
+      return { ...action.payload, toasts: state.toasts };
+
     default:
       return state;
   }

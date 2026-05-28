@@ -1,7 +1,7 @@
 // src/pages/SettingsPage.jsx
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Save, Moon, RotateCcw, Calendar, Settings, Sliders, Palette, Plus, Trash2 } from 'lucide-react';
+import { Save, Moon, RotateCcw, Calendar, Settings, Sliders, Palette, Plus, Trash2, Download, Upload } from 'lucide-react';
 
 const MONTHS = ['January','February','March','April','May','June',
                 'July','August','September','October','November','December'];
@@ -55,6 +55,41 @@ export default function SettingsPage() {
   }
 
   const nextNight = ['A','B','C'][(['A','B','C'].indexOf(localSettings.nightGroup) + 1) % 3];
+
+  function handleExportBackup() {
+    const dataStr = JSON.stringify(state, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `roster-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast('Backup exported successfully!', 'success');
+  }
+
+  function handleImportBackup(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const parsed = JSON.parse(evt.target.result);
+        if (parsed && parsed.employees && parsed.settings) {
+          dispatch({ type: 'RESTORE_BACKUP', payload: parsed });
+          toast('Backup restored successfully!', 'success');
+        } else {
+          toast('Invalid backup file format', 'danger');
+        }
+      } catch (err) {
+        toast('Error reading backup file', 'danger');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -302,6 +337,26 @@ export default function SettingsPage() {
           <button className="btn btn-primary" onClick={handleSaveShifts}>
             <Save size={14} /> Save Shift Types
           </button>
+        </div>
+      </div>
+
+      {/* Backup & Restore */}
+      <div className="card">
+        <div className="card-header">
+          <div className="card-title"><Save size={16} /> Backup & Restore Data</div>
+        </div>
+        <div style={{ padding: '16px', display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+          <button className="btn btn-primary" onClick={handleExportBackup} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Download size={14} /> Export Backup
+          </button>
+          
+          <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
+            <Upload size={14} /> Import Backup
+            <input type="file" accept=".json" style={{ display: 'none' }} onChange={handleImportBackup} />
+          </label>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+            Export your data to a .json file to move it to another laptop.
+          </span>
         </div>
       </div>
     </div>
