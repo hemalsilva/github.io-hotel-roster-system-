@@ -53,7 +53,7 @@ function buildLookups(employees, leaves, offRequests, busyDays, settings) {
     }
   });
 
-  // Off request lookup: empId -> [days]
+  // Off request lookup: empId -> { day: type }
   const offMap = {};
   offRequests.forEach(or => {
     if (or.status !== 'APPROVED') return;
@@ -61,8 +61,8 @@ function buildLookups(employees, leaves, offRequests, busyDays, settings) {
     const m = parseInt(or.date.split('-')[1]);
     const y = parseInt(or.date.split('-')[0]);
     if (m === month && y === year) {
-      if (!offMap[or.empId]) offMap[or.empId] = [];
-      offMap[or.empId].push(d);
+      if (!offMap[or.empId]) offMap[or.empId] = {};
+      offMap[or.empId][d] = or.type || 'OFF';
     }
   });
 
@@ -130,11 +130,16 @@ export function generateRoster(employees, leaves, offRequests, busyDays, setting
     const primaryShift = emp.nightGroup === nightGroup ? 'N' : emp.defaultShift;
     const weeklyOffWd  = weeklyOffIndexMap[empId] ?? 0;
     const leaveDays    = leaveMap[empId] || {};
-    const approvedOffs = new Set(offMap[empId] || []);
+    const approvedOffsMap = offMap[empId] || {};
+    const approvedOffDays = Object.keys(approvedOffsMap).map(Number);
+    const approvedOffs = new Set(approvedOffDays);
 
     // Remove approved offs that clash with leave days
     for (const d of approvedOffs) {
-      if (leaveDays[d]) approvedOffs.delete(d);
+      if (leaveDays[d]) {
+        approvedOffs.delete(d);
+        delete approvedOffsMap[d];
+      }
     }
 
     // Distribute additional off days smartly
@@ -172,7 +177,11 @@ export function generateRoster(employees, leaves, offRequests, busyDays, setting
         }
       } else if (approvedOffs.has(d)) {
         // Priority 3: Approved off request
-        if (dailyOffCount[d] < maxOff) {
+        const reqType = approvedOffsMap[d];
+        if (reqType !== 'OFF') {
+          cv = reqType;
+          stats[empId].leaveDays++;
+        } else if (dailyOffCount[d] < maxOff) {
           cv = 'OFF';
           stats[empId].offDays++;
           dailyOffCount[d]++;

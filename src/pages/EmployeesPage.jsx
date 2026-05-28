@@ -106,6 +106,7 @@ function EmployeeForm({ initial, onSave, onCancel }) {
               onChange={e => setForm(f => ({ ...f, weeklyOff: e.target.value }))}>
               {DAYS_OF_WEEK.map(d => <option key={d}>{d}</option>)}
             </select>
+          </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
           <button className="btn btn-ghost" onClick={onCancel}>Cancel</button>

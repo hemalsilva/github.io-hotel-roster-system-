@@ -6,6 +6,7 @@ import * as XLSX from 'xlsx';
 
 function OffForm({ employees, settings, onSave, onCancel }) {
   const [empId, setEmpId] = useState(employees[0]?.id || '');
+  const [type, setType] = useState('OFF');
   const [currentDate, setCurrentDate] = useState(`${settings.year}-${String(settings.month).padStart(2,'0')}-01`);
   const [dates, setDates] = useState([]);
   const [status, setStatus] = useState('PENDING');
@@ -21,7 +22,7 @@ function OffForm({ employees, settings, onSave, onCancel }) {
   };
 
   const handleSubmit = () => {
-    onSave({ empId, dates, status });
+    onSave({ empId, dates, status, type });
   };
 
   return (
@@ -37,6 +38,15 @@ function OffForm({ employees, settings, onSave, onCancel }) {
             <select className="form-control" value={empId}
               onChange={e => setEmpId(Number(e.target.value))}>
               {employees.map(e => <option key={e.id} value={e.id}>{e.id} — {e.name}</option>)}
+            </select>
+          </div>
+          <div className="form-group" style={{ gridColumn: '1/-1' }}>
+            <label className="form-label">Leave Type</label>
+            <select className="form-control" value={type}
+              onChange={e => setType(e.target.value)}>
+              {settings.shiftOptions.filter(s => !['M','E','N'].includes(s.code)).map(s => (
+                <option key={s.code} value={s.code}>{s.label}</option>
+              ))}
             </select>
           </div>
           <div className="form-group" style={{ gridColumn: '1/-1' }}>
@@ -86,7 +96,7 @@ export default function OffRequestsPage() {
   const approved = offRequests.filter(r => r.status === 'APPROVED').length;
   const pending  = offRequests.filter(r => r.status === 'PENDING').length;
 
-  function handleAdd({ empId, dates, status }) {
+  function handleAdd({ empId, dates, status, type }) {
     if (dates.length === 0) {
       toast('Please add at least one date', 'warning');
       return;
@@ -95,6 +105,7 @@ export default function OffRequestsPage() {
       empId,
       date: d,
       status,
+      type,
       empName: employees.find(e => e.id === Number(empId))?.name || 'Unknown'
     }));
     dispatch({ type: 'BULK_ADD_OFF_REQUESTS', payload: newRequests });
@@ -205,17 +216,28 @@ export default function OffRequestsPage() {
             <thead>
               <tr>
                 <th>Emp No</th><th>Employee</th>
-                <th>Requested Date</th><th>Status</th><th>Actions</th>
+                <th>Date</th>
+                <th>Leave Type</th>
+                <th>Status</th><th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {offRequests.map(or => {
-                const ss = STATUS_STYLE[or.status] || STATUS_STYLE.PENDING;
+              {offRequests.map(req => {
+                const ss = STATUS_STYLE[req.status] || STATUS_STYLE.PENDING;
                 return (
-                  <tr key={or.id}>
-                    <td style={{ color: 'var(--text-muted)' }}>{or.empId}</td>
-                    <td style={{ fontWeight: 500 }}>{or.empName}</td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{or.date}</td>
+                  <tr key={req.id}>
+                    <td style={{ color: 'var(--text-muted)' }}>{req.empId}</td>
+                    <td style={{ fontWeight: 500 }}>{req.empName}</td>
+                    <td>{req.date}</td>
+                    <td>
+                      <span style={{ 
+                        background: settings.shiftOptions.find(s => s.code === (req.type || 'OFF'))?.bg || '#ddd',
+                        color: settings.shiftOptions.find(s => s.code === (req.type || 'OFF'))?.color || '#000',
+                        padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600
+                      }}>
+                        {settings.shiftOptions.find(s => s.code === (req.type || 'OFF'))?.label || 'Day Off'}
+                      </span>
+                    </td>
                     <td>
                       <select
                         style={{
@@ -224,8 +246,8 @@ export default function OffRequestsPage() {
                           borderRadius: 20, padding: '3px 10px',
                           fontSize: 11, fontWeight: 600, cursor: 'pointer',
                         }}
-                        value={or.status}
-                        onChange={e => handleStatus(or.id, e.target.value)}
+                        value={req.status}
+                        onChange={e => handleStatus(req.id, e.target.value)}
                       >
                         <option value="PENDING">PENDING</option>
                         <option value="APPROVED">APPROVED</option>
@@ -233,7 +255,7 @@ export default function OffRequestsPage() {
                       </select>
                     </td>
                     <td>
-                      <button className="btn btn-danger btn-sm" onClick={() => handleDelete(or.id)}>
+                      <button className="btn btn-danger btn-sm" onClick={() => handleDelete(req.id)}>
                         <Trash2 size={12} />
                       </button>
                     </td>
