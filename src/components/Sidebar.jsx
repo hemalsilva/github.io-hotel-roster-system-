@@ -12,7 +12,6 @@ const NAV_ITEMS = [
   { id: 'leaves',       label: 'Leave Requests',    icon: ClipboardList,   section: 'data' },
   { id: 'offrequests',  label: 'Off Requests',      icon: CalendarOff,     section: 'data' },
   { id: 'busydays',     label: 'Busy Days',         icon: TrendingUp,      section: 'data' },
-  { id: 'nightshift',   label: 'Night Rotation',    icon: Moon,            section: 'config' },
   { id: 'settings',     label: 'Monthly Settings',  icon: Settings,        section: 'config' },
   { id: 'rules',        label: 'Roster Rules',      icon: BookOpen,        section: 'config' },
   { id: 'editlog',      label: 'Edit Log',          icon: FileText,        section: 'log' },
@@ -84,7 +83,7 @@ export default function Sidebar() {
 
       <div className="sidebar-footer">
         <div style={{ marginBottom: 4, fontWeight: 600, color: 'var(--text-secondary)' }}>
-          {settings.month}/{settings.year} · Night: Group {settings.nightGroup}
+          {settings.month}/{settings.year}
         </div>
         <div>Day Off: {settings.monthlyDayOff}/person</div>
       </div>

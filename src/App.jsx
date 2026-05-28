@@ -8,7 +8,6 @@ import EmployeesPage   from './pages/EmployeesPage';
 import LeavesPage      from './pages/LeavesPage';
 import OffRequestsPage from './pages/OffRequestsPage';
 import BusyDaysPage    from './pages/BusyDaysPage';
-import NightShiftPage  from './pages/NightShiftPage';
 import SettingsPage    from './pages/SettingsPage';
 import EditLogPage     from './pages/EditLogPage';
 import { Zap, AlertTriangle, Edit3 } from 'lucide-react';
@@ -20,7 +19,6 @@ const PAGE_CONFIG = {
   leaves:      { title: 'Leave Requests',     badge: null,        component: LeavesPage },
   offrequests: { title: 'Off Requests',       badge: null,        component: OffRequestsPage },
   busydays:    { title: 'Busy Days & Occ.',   badge: null,        component: BusyDaysPage },
-  nightshift:  { title: 'Night Shift Rotation',badge: null,       component: NightShiftPage },
   settings:    { title: 'Monthly Settings',   badge: null,        component: SettingsPage },
   rules:       { title: 'Roster Rules',       badge: null,        component: SettingsPage },
   editlog:     { title: 'Edit Audit Log',     badge: 'edits',     component: EditLogPage },
@@ -76,7 +74,7 @@ function AppContent() {
 
           <div className="header-actions">
             <span style={{ fontSize: 11, color: 'var(--text-muted)', marginRight: 4 }}>
-              Night: Gr {settings.nightGroup} · {settings.monthlyDayOff}d off/person
+              {settings.monthlyDayOff}d off/person
             </span>
             <button className="btn btn-primary btn-sm" onClick={handleGenerate}>
               <Zap size={13} />
