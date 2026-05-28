@@ -90,7 +90,7 @@ function OffForm({ employees, settings, shiftOptions, onSave, onCancel }) {
 
 export default function OffRequestsPage() {
   const { state, dispatch, toast } = useApp();
-  const { offRequests, employees, settings, shiftOptions } = state;
+  const { offRequests = [], employees = [], settings = {}, shiftOptions = [] } = state;
   const [showForm, setShowForm] = useState(false);
 
   const approved = offRequests.filter(r => r.status === 'APPROVED').length;
