@@ -314,7 +314,7 @@ export function getDailySummary(roster, employees, numDays) {
     const onDuty = employees.filter(e => ['M','E','N'].includes(roster[e.id]?.[d])).length;
     const offCount = employees.filter(e => roster[e.id]?.[d] === 'OFF').length;
     const nightCount = employees.filter(e => roster[e.id]?.[d] === 'N').length;
-    const leaveCount = employees.filter(e => ['AL','CL','SL','HL','CO'].includes(roster[e.id]?.[d])).length;
+    const leaveCount = employees.filter(e => ['AL','CL','SL','HL','LL'].includes(roster[e.id]?.[d])).length;
     summary[d] = { onDuty, offCount, nightCount, leaveCount };
   }
   return summary;
