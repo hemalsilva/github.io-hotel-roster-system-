@@ -11,7 +11,8 @@ import {
   Zap, Download, RefreshCw, AlertTriangle, CheckCircle,
   Edit3, Undo2, Filter, Eye, EyeOff, Info
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
 // ── Shift Dropdown (inline cell editor) ──────────────────
 function ShiftDropdown({ empId, empName, day, currentShift, position, onSelect, onClose, busyInfo, shiftOptions }) {
@@ -172,23 +173,105 @@ export default function RosterPage() {
     dispatch({ type: 'GENERATE_ROSTER' });
   }
 
-  // Export to Excel
-  function handleExport() {
+  // Helper to convert css rgba/hex to Excel ARGB
+  function rgbaToArgb(colorStr) {
+    if (!colorStr) return 'FFFFFFFF';
+    if (colorStr.startsWith('#')) {
+      let hex = colorStr.replace('#', '');
+      if (hex.length === 3) hex = hex.split('').map(x => x + x).join('');
+      return 'FF' + hex.toUpperCase();
+    }
+    const match = colorStr.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+      const r = parseInt(match[1]).toString(16).padStart(2, '0');
+      const g = parseInt(match[2]).toString(16).padStart(2, '0');
+      const b = parseInt(match[3]).toString(16).padStart(2, '0');
+      return 'FF' + (r + g + b).toUpperCase();
+    }
+    return 'FFFFFFFF';
+  }
+
+  // Export to Excel with styling
+  async function handleExport() {
     if (!rosterGenerated) { toast('Generate the roster first', 'warning'); return; }
-    const wb = XLSX.utils.book_new();
+    
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(`${monthName} ${year}`);
+
     const header = ['Emp No', 'Employee Name', ...Array.from({length: numDays}, (_,i) => String(i+1)), 'Work Days', 'OFF Days', 'Night(N)'];
-    const rows = [header];
-    filteredEmployees.forEach(emp => {
-      const row = [emp.id, emp.name];
-      for (let d = 1; d <= numDays; d++) row.push(roster[emp.id]?.[d] || '');
-      const s = stats[emp.id] || {};
-      row.push(s.workDays || 0, s.offDays || 0, s.nightDays || 0);
-      rows.push(row);
+    worksheet.addRow(header);
+
+    // Style header
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    headerRow.eachCell((cell) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.border = {
+        top: { style: 'thin' }, left: { style: 'thin' },
+        bottom: { style: 'thin' }, right: { style: 'thin' }
+      };
     });
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    XLSX.utils.book_append_sheet(wb, ws, `${monthName} ${year}`);
-    XLSX.writeFile(wb, `Roster_${monthName}_${year}.xlsx`);
-    toast('Roster exported to Excel!', 'success');
+
+    // Adjust column widths
+    worksheet.getColumn(1).width = 10;
+    worksheet.getColumn(2).width = 25;
+    for (let i = 3; i <= numDays + 2; i++) worksheet.getColumn(i).width = 5;
+    worksheet.getColumn(numDays + 3).width = 12;
+    worksheet.getColumn(numDays + 4).width = 10;
+    worksheet.getColumn(numDays + 5).width = 10;
+
+    // Build color map from shiftOptions
+    const colorMap = {};
+    shiftOptions.forEach(s => {
+      // Overrides for better Excel visibility for default shifts
+      let bg = 'FFFFFFFF';
+      let fontColor = 'FF000000';
+      if (s.code === 'M') { bg = 'FFDBEAFE'; fontColor = 'FF1E3A8A'; }
+      else if (s.code === 'E') { bg = 'FFFEF3C7'; fontColor = 'FF92400E'; }
+      else if (s.code === 'N') { bg = 'FFEDE9FE'; fontColor = 'FF4C1D95'; }
+      else if (s.code === 'OFF') { bg = 'FFDCFCE7'; fontColor = 'FF166534'; }
+      else if (s.code === 'AB') { bg = 'FFFFB8B8'; fontColor = 'FFDC2626'; }
+      else {
+        bg = rgbaToArgb(s.bg);
+        fontColor = rgbaToArgb(s.color);
+      }
+      colorMap[s.code] = { bg, fontColor };
+    });
+
+    filteredEmployees.forEach(emp => {
+      const rowData = [emp.id, emp.name];
+      for (let d = 1; d <= numDays; d++) rowData.push(roster[emp.id]?.[d] || '');
+      const s = stats[emp.id] || {};
+      rowData.push(s.workDays || 0, s.offDays || 0, s.nightDays || 0);
+      
+      const row = worksheet.addRow(rowData);
+
+      // Style cells
+      for (let d = 1; d <= numDays; d++) {
+        const cellValue = roster[emp.id]?.[d] || '';
+        const cell = row.getCell(d + 2);
+        
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFDDDDDD' } },
+          left: { style: 'thin', color: { argb: 'FFDDDDDD' } },
+          bottom: { style: 'thin', color: { argb: 'FFDDDDDD' } },
+          right: { style: 'thin', color: { argb: 'FFDDDDDD' } }
+        };
+
+        if (cellValue && colorMap[cellValue]) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colorMap[cellValue].bg } };
+          cell.font = { color: { argb: colorMap[cellValue].fontColor }, bold: true };
+        }
+      }
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    saveAs(blob, `Roster_${monthName}_${year}.xlsx`);
+    
+    toast('Roster exported to Excel with colors!', 'success');
   }
 
   // Occupancy class for column header
