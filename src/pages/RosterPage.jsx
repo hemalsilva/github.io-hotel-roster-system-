@@ -114,22 +114,22 @@ export default function RosterPage() {
   let filteredEmployees = filterGroup === 'ALL'
     ? employees
     : filterGroup === 'MORNING'
-    ? employees.filter(e => e.nightGroup !== nightGroup && e.defaultShift === 'M')
+    ? employees.filter(e => e.defaultShift === 'M')
     : filterGroup === 'AFTERNOON'
-    ? employees.filter(e => e.nightGroup !== nightGroup && e.defaultShift === 'E')
+    ? employees.filter(e => e.defaultShift === 'E')
     : filterGroup === 'NIGHT'
-    ? employees.filter(e => e.nightGroup === nightGroup || e.defaultShift === 'N')
+    ? employees.filter(e => e.defaultShift === 'N')
     : employees;
 
   if (filterDept !== 'ALL') {
     filteredEmployees = filteredEmployees.filter(e => e.section === filterDept);
   }
 
-  const activeNightEmps = filteredEmployees.filter(e => e.nightGroup === nightGroup || e.defaultShift === 'N');
+  const activeNightEmps = filteredEmployees.filter(e => e.defaultShift === 'N');
   const activeMorningEmps = filteredEmployees
-    .filter(e => e.nightGroup !== nightGroup && e.defaultShift === 'M')
+    .filter(e => e.defaultShift === 'M')
     .sort((a, b) => a.section.localeCompare(b.section, undefined, { numeric: true }));
-  const activeEveningEmps = filteredEmployees.filter(e => e.nightGroup !== nightGroup && e.defaultShift === 'E');
+  const activeEveningEmps = filteredEmployees.filter(e => e.defaultShift === 'E');
   
   const shiftGroups = [
     { label: 'Morning Shift', emps: activeMorningEmps, bg: 'rgba(59,130,246,0.1)', color: '#3b82f6' },

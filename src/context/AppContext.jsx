@@ -210,16 +210,6 @@ function reducer(state, action) {
     case 'CLEAR_MANUAL_EDITS':
       return { ...state, manualEdits: {}, editLog: [] };
 
-    case 'ROTATE_NIGHT_GROUP': {
-      const order = ['A', 'B', 'C'];
-      const idx = order.indexOf(state.settings.nightGroup);
-      const next = order[(idx + 1) % 3];
-      return {
-        ...state,
-        settings: { ...state.settings, nightGroup: next },
-      };
-    }
-
     case 'ADD_TOAST': {
       const toast = { ...action.payload, id: Date.now() };
       return { ...state, toasts: [...state.toasts, toast] };

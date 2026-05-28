@@ -106,16 +106,6 @@ function EmployeeForm({ initial, onSave, onCancel }) {
               onChange={e => setForm(f => ({ ...f, weeklyOff: e.target.value }))}>
               {DAYS_OF_WEEK.map(d => <option key={d}>{d}</option>)}
             </select>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Night Shift Group</label>
-            <select className="form-control" value={form.nightGroup}
-              onChange={e => setForm(f => ({ ...f, nightGroup: e.target.value }))}>
-              <option value="A">Group A</option>
-              <option value="B">Group B</option>
-              <option value="C">Group C</option>
-            </select>
-          </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
           <button className="btn btn-ghost" onClick={onCancel}>Cancel</button>
@@ -160,8 +150,7 @@ export default function EmployeesPage() {
             section: row['Floor Section'] || row['Section'] || row['Department'] || 'Rooms',
             skill: row['Skill Level'] || row['Skill'] || 'B',
             defaultShift: row['Default Shift'] || 'M',
-            weeklyOff: row['Weekly Off'] || 'Sunday',
-            nightGroup: row['Night Group'] || 'A'
+            weeklyOff: row['Weekly Off'] || 'Sunday'
           });
 
           const offReqsRaw = row['Day off Request'] || row['Off Requests'] || row['Requested Dates'];

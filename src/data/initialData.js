@@ -16,7 +16,6 @@ export const SHIFT_OPTIONS = [
   { code: 'AB',  label: 'Absent',     color: '#FFFFFF', bg: 'rgba(220,38,38,0.6)' },
 ];
 
-export const NIGHT_GROUPS = ['A', 'B', 'C'];
 
 export const DEPARTMENTS = [
   'Rooms',
