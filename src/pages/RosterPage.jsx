@@ -198,28 +198,65 @@ export default function RosterPage() {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(`${monthName} ${year}`);
 
-    const header = ['Emp No', 'Employee Name', ...Array.from({length: numDays}, (_,i) => String(i+1)), 'Work Days', 'OFF Days', 'Night(N)'];
-    worksheet.addRow(header);
+    // 1. Title Row
+    worksheet.mergeCells(1, 1, 1, numDays + 6);
+    const titleCell = worksheet.getCell(1, 1);
+    titleCell.value = `${settings.department || 'Hotel'} Monthly Roster - ${monthName} ${year}`;
+    titleCell.font = { size: 16, bold: true, color: { argb: 'FF1E293B' } };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+    worksheet.getRow(1).height = 30;
 
-    // Style header
-    const headerRow = worksheet.getRow(1);
-    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    headerRow.eachCell((cell) => {
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
-      cell.alignment = { horizontal: 'center', vertical: 'middle' };
-      cell.border = {
-        top: { style: 'thin' }, left: { style: 'thin' },
-        bottom: { style: 'thin' }, right: { style: 'thin' }
-      };
+    // 2. Headers Row 2 (Emp, Name, Section, Dates, Stats)
+    const r2 = worksheet.getRow(2);
+    r2.getCell(1).value = 'Emp No';
+    r2.getCell(2).value = 'Employee Name';
+    r2.getCell(3).value = 'Section';
+    for (let d = 1; d <= numDays; d++) r2.getCell(3 + d).value = d;
+    r2.getCell(numDays + 4).value = 'WD'; // Work Days
+    r2.getCell(numDays + 5).value = 'OFF'; // Off Days
+    r2.getCell(numDays + 6).value = 'N'; // Night Shifts
+
+    // 3. Headers Row 3 (Day of Week)
+    const r3 = worksheet.getRow(3);
+    for (let d = 1; d <= numDays; d++) {
+      r3.getCell(3 + d).value = getDayAbbr(year, month, d);
+    }
+
+    // Merge Header Cells
+    worksheet.mergeCells(2, 1, 3, 1);
+    worksheet.mergeCells(2, 2, 3, 2);
+    worksheet.mergeCells(2, 3, 3, 3);
+    worksheet.mergeCells(2, numDays + 4, 3, numDays + 4);
+    worksheet.mergeCells(2, numDays + 5, 3, numDays + 5);
+    worksheet.mergeCells(2, numDays + 6, 3, numDays + 6);
+
+    // Style Headers (Rows 2 and 3)
+    [2, 3].forEach(rowIdx => {
+      const row = worksheet.getRow(rowIdx);
+      row.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 10 };
+      row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        if (colNumber <= numDays + 6) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FFDDDDDD' } },
+            left: { style: 'thin', color: { argb: 'FFDDDDDD' } },
+            bottom: { style: 'thin', color: { argb: 'FFDDDDDD' } },
+            right: { style: 'thin', color: { argb: 'FFDDDDDD' } }
+          };
+        }
+      });
     });
 
     // Adjust column widths
     worksheet.getColumn(1).width = 10;
     worksheet.getColumn(2).width = 25;
-    for (let i = 3; i <= numDays + 2; i++) worksheet.getColumn(i).width = 5;
-    worksheet.getColumn(numDays + 3).width = 12;
-    worksheet.getColumn(numDays + 4).width = 10;
-    worksheet.getColumn(numDays + 5).width = 10;
+    worksheet.getColumn(3).width = 18; // Section width
+    for (let i = 4; i <= numDays + 3; i++) worksheet.getColumn(i).width = 5; // Dates
+    worksheet.getColumn(numDays + 4).width = 8;
+    worksheet.getColumn(numDays + 5).width = 8;
+    worksheet.getColumn(numDays + 6).width = 8;
 
     // Build color map from shiftOptions
     const colorMap = {};
@@ -240,7 +277,7 @@ export default function RosterPage() {
     });
 
     filteredEmployees.forEach(emp => {
-      const rowData = [emp.id, emp.name];
+      const rowData = [emp.id, emp.name, emp.section];
       for (let d = 1; d <= numDays; d++) rowData.push(roster[emp.id]?.[d] || '');
       const s = stats[emp.id] || {};
       rowData.push(s.workDays || 0, s.offDays || 0, s.nightDays || 0);
@@ -248,9 +285,8 @@ export default function RosterPage() {
       const row = worksheet.addRow(rowData);
 
       // Style cells
-      for (let d = 1; d <= numDays; d++) {
-        const cellValue = roster[emp.id]?.[d] || '';
-        const cell = row.getCell(d + 2);
+      for (let d = 1; d <= numDays + 6; d++) {
+        const cell = row.getCell(d);
         
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
         cell.border = {
@@ -260,9 +296,22 @@ export default function RosterPage() {
           right: { style: 'thin', color: { argb: 'FFDDDDDD' } }
         };
 
-        if (cellValue && colorMap[cellValue]) {
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colorMap[cellValue].bg } };
-          cell.font = { color: { argb: colorMap[cellValue].fontColor }, bold: true };
+        // Align Name and Section to left
+        if (d === 2 || d === 3) {
+          cell.alignment = { horizontal: 'left', vertical: 'middle' };
+        }
+
+        // Apply colors to shift cells
+        if (d > 3 && d <= numDays + 3) {
+          const cellValue = roster[emp.id]?.[d - 3] || '';
+          if (cellValue && colorMap[cellValue]) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colorMap[cellValue].bg } };
+            cell.font = { color: { argb: colorMap[cellValue].fontColor }, bold: true, size: 10 };
+          } else {
+             cell.font = { size: 10 };
+          }
+        } else {
+           cell.font = { size: 11 };
         }
       }
     });
