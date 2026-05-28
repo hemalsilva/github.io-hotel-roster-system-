@@ -110,9 +110,13 @@ export default function RosterPage() {
 
   const filteredEmployees = filterGroup === 'ALL'
     ? employees
+    : filterGroup === 'MORNING'
+    ? employees.filter(e => e.nightGroup !== nightGroup && e.defaultShift === 'M')
+    : filterGroup === 'AFTERNOON'
+    ? employees.filter(e => e.nightGroup !== nightGroup && e.defaultShift === 'E')
     : filterGroup === 'NIGHT'
-    ? employees.filter(e => e.nightGroup === nightGroup)
-    : employees.filter(e => e.nightGroup === filterGroup);
+    ? employees.filter(e => e.nightGroup === nightGroup || e.defaultShift === 'N')
+    : employees;
 
   const activeNightEmps = filteredEmployees.filter(e => e.nightGroup === nightGroup || e.defaultShift === 'N');
   const activeMorningEmps = filteredEmployees.filter(e => e.nightGroup !== nightGroup && e.defaultShift === 'M');
@@ -234,10 +238,9 @@ export default function RosterPage() {
               onChange={e => setFilterGroup(e.target.value)}
             >
               <option value="ALL">All Employees</option>
-              <option value="A">Night Group A</option>
-              <option value="B">Night Group B</option>
-              <option value="C">Night Group C</option>
-              <option value="NIGHT">Active Night Shift</option>
+              <option value="MORNING">Morning Shift</option>
+              <option value="AFTERNOON">Afternoon Shift</option>
+              <option value="NIGHT">Night Shift</option>
             </select>
 
             <button
