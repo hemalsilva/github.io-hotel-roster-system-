@@ -17,6 +17,15 @@ export const SHIFT_OPTIONS = [
 
 export const NIGHT_GROUPS = ['A', 'B', 'C'];
 
+export const DEPARTMENTS = [
+  'Rooms',
+  'Public Area',
+  'Laundry - Uniform',
+  'Laundry - Linen',
+  'Flower Shop',
+  'Stores'
+];
+
 export const DAYS_OF_WEEK = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
 export const DEFAULT_RULES = {
@@ -43,18 +52,18 @@ export const DEFAULT_SETTINGS = {
 };
 
 export const DEFAULT_EMPLOYEES = [
-  { id: 1001, name: 'Amal Fernando',       position: 'Room Attendant', section: 'HK', skill: 'A', defaultShift: 'M', weeklyOff: 'Sunday',    nightGroup: 'A' },
-  { id: 1002, name: 'Kamal Perera',         position: 'Room Attendant', section: 'HK', skill: 'B', defaultShift: 'E', weeklyOff: 'Monday',    nightGroup: 'B' },
-  { id: 1003, name: 'Nimal Silva',           position: 'Supervisor',     section: 'HK', skill: 'A', defaultShift: 'M', weeklyOff: 'Tuesday',   nightGroup: 'C' },
-  { id: 1004, name: 'Sunil Bandara',         position: 'Room Attendant', section: 'HK', skill: 'B', defaultShift: 'M', weeklyOff: 'Wednesday', nightGroup: 'A' },
-  { id: 1005, name: 'Priya Jayasinghe',      position: 'Room Attendant', section: 'HK', skill: 'A', defaultShift: 'E', weeklyOff: 'Thursday',  nightGroup: 'B' },
-  { id: 1006, name: 'Chamara Dias',          position: 'Supervisor',     section: 'HK', skill: 'A', defaultShift: 'E', weeklyOff: 'Friday',    nightGroup: 'C' },
-  { id: 1007, name: 'Ravi Kumar',            position: 'Room Attendant', section: 'HK', skill: 'B', defaultShift: 'M', weeklyOff: 'Saturday',  nightGroup: 'A' },
-  { id: 1008, name: 'Sanduni Rathnayake',    position: 'Room Attendant', section: 'HK', skill: 'A', defaultShift: 'E', weeklyOff: 'Sunday',    nightGroup: 'B' },
-  { id: 1009, name: 'Tharindu Madusanka',    position: 'Room Attendant', section: 'HK', skill: 'B', defaultShift: 'M', weeklyOff: 'Monday',    nightGroup: 'C' },
-  { id: 1010, name: 'Dilani Wijesekara',     position: 'Supervisor',     section: 'HK', skill: 'A', defaultShift: 'N', weeklyOff: 'Tuesday',   nightGroup: 'A' },
-  { id: 1011, name: 'Ishara Wickrama',       position: 'Room Attendant', section: 'HK', skill: 'B', defaultShift: 'M', weeklyOff: 'Wednesday', nightGroup: 'B' },
-  { id: 1012, name: 'Lasith Mendis',         position: 'Room Attendant', section: 'HK', skill: 'A', defaultShift: 'E', weeklyOff: 'Thursday',  nightGroup: 'C' },
+  { id: 1001, name: 'Amal Fernando',       position: 'Room Attendant', section: 'Rooms', skill: 'A', defaultShift: 'M', weeklyOff: 'Sunday',    nightGroup: 'A' },
+  { id: 1002, name: 'Kamal Perera',         position: 'Room Attendant', section: 'Rooms', skill: 'B', defaultShift: 'E', weeklyOff: 'Monday',    nightGroup: 'B' },
+  { id: 1003, name: 'Nimal Silva',           position: 'Supervisor',     section: 'Public Area', skill: 'A', defaultShift: 'M', weeklyOff: 'Tuesday',   nightGroup: 'C' },
+  { id: 1004, name: 'Sunil Bandara',         position: 'Room Attendant', section: 'Rooms', skill: 'B', defaultShift: 'M', weeklyOff: 'Wednesday', nightGroup: 'A' },
+  { id: 1005, name: 'Priya Jayasinghe',      position: 'Room Attendant', section: 'Rooms', skill: 'A', defaultShift: 'E', weeklyOff: 'Thursday',  nightGroup: 'B' },
+  { id: 1006, name: 'Chamara Dias',          position: 'Supervisor',     section: 'Rooms', skill: 'A', defaultShift: 'E', weeklyOff: 'Friday',    nightGroup: 'C' },
+  { id: 1007, name: 'Ravi Kumar',            position: 'Room Attendant', section: 'Rooms', skill: 'B', defaultShift: 'M', weeklyOff: 'Saturday',  nightGroup: 'A' },
+  { id: 1008, name: 'Sanduni Rathnayake',    position: 'Room Attendant', section: 'Laundry - Uniform', skill: 'A', defaultShift: 'E', weeklyOff: 'Sunday',    nightGroup: 'B' },
+  { id: 1009, name: 'Tharindu Madusanka',    position: 'Room Attendant', section: 'Rooms', skill: 'B', defaultShift: 'M', weeklyOff: 'Monday',    nightGroup: 'C' },
+  { id: 1010, name: 'Dilani Wijesekara',     position: 'Supervisor',     section: 'Rooms', skill: 'A', defaultShift: 'N', weeklyOff: 'Tuesday',   nightGroup: 'A' },
+  { id: 1011, name: 'Ishara Wickrama',       position: 'Room Attendant', section: 'Laundry - Linen', skill: 'B', defaultShift: 'M', weeklyOff: 'Wednesday', nightGroup: 'B' },
+  { id: 1012, name: 'Lasith Mendis',         position: 'Room Attendant', section: 'Rooms', skill: 'A', defaultShift: 'E', weeklyOff: 'Thursday',  nightGroup: 'C' },
 ];
 
 export const DEFAULT_LEAVES = [

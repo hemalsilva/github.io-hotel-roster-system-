@@ -5,6 +5,7 @@ import { useApp } from '../context/AppContext';
 import {
   getDaysInMonth, getWeekdayIndex, getDayAbbr, validateRoster
 } from '../utils/rosterEngine';
+import { DEPARTMENTS } from '../data/initialData';
 
 import {
   Zap, Download, RefreshCw, AlertTriangle, CheckCircle,
@@ -99,6 +100,7 @@ export default function RosterPage() {
   const [dropdown, setDropdown] = useState(null);
   const [showAlerts, setShowAlerts] = useState(true);
   const [filterGroup, setFilterGroup] = useState('ALL');
+  const [filterDept, setFilterDept] = useState('ALL');
   const [highlightManual, setHighlightManual] = useState(true);
 
   const { month, year, nightGroup, monthlyDayOff } = settings;
@@ -108,7 +110,7 @@ export default function RosterPage() {
   const dangerAlerts = alerts.filter(a => a.type === 'danger');
   const warnAlerts   = alerts.filter(a => a.type === 'warning');
 
-  const filteredEmployees = filterGroup === 'ALL'
+  let filteredEmployees = filterGroup === 'ALL'
     ? employees
     : filterGroup === 'MORNING'
     ? employees.filter(e => e.nightGroup !== nightGroup && e.defaultShift === 'M')
@@ -117,6 +119,10 @@ export default function RosterPage() {
     : filterGroup === 'NIGHT'
     ? employees.filter(e => e.nightGroup === nightGroup || e.defaultShift === 'N')
     : employees;
+
+  if (filterDept !== 'ALL') {
+    filteredEmployees = filteredEmployees.filter(e => e.section === filterDept);
+  }
 
   const activeNightEmps = filteredEmployees.filter(e => e.nightGroup === nightGroup || e.defaultShift === 'N');
   const activeMorningEmps = filteredEmployees.filter(e => e.nightGroup !== nightGroup && e.defaultShift === 'M');
@@ -230,7 +236,18 @@ export default function RosterPage() {
           </div>
 
           <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-            {/* Filter */}
+            {/* Filter by Department */}
+            <select
+              className="form-control"
+              style={{ padding: '5px 8px', fontSize: 11, width: 'auto' }}
+              value={filterDept}
+              onChange={e => setFilterDept(e.target.value)}
+            >
+              <option value="ALL">All Departments</option>
+              {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+
+            {/* Filter by Shift */}
             <select
               className="form-control"
               style={{ padding: '5px 8px', fontSize: 11, width: 'auto' }}

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { UserPlus, Trash2, Edit2, Save, X, Moon, UploadCloud } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { DAYS_OF_WEEK } from '../data/initialData';
+import { DAYS_OF_WEEK, DEPARTMENTS } from '../data/initialData';
 
 function EmployeeRow({ emp, nightGroup, shiftOptions, onEdit, onDelete }) {
   const isNight = emp.nightGroup === nightGroup;
@@ -49,7 +49,7 @@ function EmployeeRow({ emp, nightGroup, shiftOptions, onEdit, onDelete }) {
 
 function EmployeeForm({ initial, onSave, onCancel }) {
   const [form, setForm] = useState(initial || {
-    name: '', position: 'Room Attendant', section: 'HK',
+    name: '', position: 'Room Attendant', section: 'Rooms',
     skill: 'A', defaultShift: 'M', weeklyOff: 'Sunday', nightGroup: 'A',
   });
 
@@ -78,9 +78,11 @@ function EmployeeForm({ initial, onSave, onCancel }) {
             </select>
           </div>
           <div className="form-group">
-            <label className="form-label">Section</label>
-            <input className="form-control" value={form.section}
-              onChange={e => setForm(f => ({ ...f, section: e.target.value }))} />
+            <label className="form-label">Section / Department</label>
+            <select className="form-control" value={form.section}
+              onChange={e => setForm(f => ({ ...f, section: e.target.value }))}>
+              {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
           </div>
           <div className="form-group">
             <label className="form-label">Skill Level</label>
@@ -149,7 +151,7 @@ export default function EmployeesPage() {
         const newEmps = data.map(row => ({
           name: row['Employee Name'] || row['Name'] || 'Unknown',
           position: row['Position'] || 'Room Attendant',
-          section: row['Section'] || 'HK',
+          section: row['Section'] || row['Department'] || 'Rooms',
           skill: row['Skill Level'] || row['Skill'] || 'B',
           defaultShift: row['Default Shift'] || 'M',
           weeklyOff: row['Weekly Off'] || 'Sunday',
