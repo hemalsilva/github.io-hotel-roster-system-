@@ -236,7 +236,7 @@ export default function EmployeesPage() {
 
       <div className="card">
         <div className="card-header">
-          <div className="card-title">👥 Employee Master List</div>
+          <div className="card-title">👥 Employee Master List (v2)</div>
           <div style={{ display: 'flex', gap: 8 }}>
             <label className="btn btn-ghost btn-sm" style={{ cursor: 'pointer', margin: 0 }}>
               <UploadCloud size={14} /> Bulk Upload (Excel)
@@ -286,5 +286,6 @@ export default function EmployeesPage() {
     </div>
   );
 }
+
 
 
