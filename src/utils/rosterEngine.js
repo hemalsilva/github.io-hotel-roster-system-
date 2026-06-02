@@ -66,10 +66,14 @@ function buildLookups(employees, leaves, offRequests, busyDays, settings) {
     }
   });
 
-  // Weekly off map
+// Weekly off map
   const weeklyOffIndexMap = {};
   employees.forEach(emp => {
-    weeklyOffIndexMap[emp.id] = DAY_NAMES.indexOf(emp.weeklyOff);
+    if (Array.isArray(emp.weeklyOff)) {
+      weeklyOffIndexMap[emp.id] = emp.weeklyOff.map(d => DAY_NAMES.indexOf(d));
+    } else {
+      weeklyOffIndexMap[emp.id] = [DAY_NAMES.indexOf(emp.weeklyOff)];
+    }
   });
 
   return { busyMap, leaveMap, offMap, weeklyOffIndexMap };
@@ -90,7 +94,7 @@ function distributeOffs(empId, weeklyOffWeekday, targetOffCount, leaveDays, appr
   for (let d = 1; d <= numDays; d++) {
     if (leaveDays[d] || offSet.has(d)) continue;
     const wd = getWeekdayIndex(year, month, d);
-    if (wd === weeklyOffWeekday) continue; // weekly off handled separately
+    if (weeklyOffWeekday.includes(wd)) continue; // weekly off handled separately
     const level = busyMap[d]?.level || 'MEDIUM';
     if (level === 'LOW') lowDays.push(d);
     else if (level === 'MEDIUM') medDays.push(d);
@@ -128,7 +132,7 @@ export function generateRoster(employees, leaves, offRequests, busyDays, setting
   for (const emp of employees) {
     const empId       = emp.id;
     const primaryShift = emp.nightGroup === nightGroup ? 'N' : emp.defaultShift;
-    const weeklyOffWd  = weeklyOffIndexMap[empId] ?? 0;
+    const weeklyOffWds = weeklyOffIndexMap[empId] || [];
     const leaveDays    = leaveMap[empId] || {};
     const approvedOffsMap = offMap[empId] || {};
     const approvedOffDays = Object.keys(approvedOffsMap).map(Number);
@@ -144,7 +148,7 @@ export function generateRoster(employees, leaves, offRequests, busyDays, setting
 
     // Distribute additional off days smartly
     const offDaySet = distributeOffs(
-      empId, weeklyOffWd, monthlyDayOff,
+      empId, weeklyOffWds, monthlyDayOff,
       leaveDays, [...approvedOffs], numDays,
       busyMap, year, month, rules
     );
@@ -164,7 +168,7 @@ export function generateRoster(employees, leaves, offRequests, busyDays, setting
         // Priority 1: Approved leave
         cv = leaveDays[d];
         stats[empId].leaveDays++;
-      } else if (weekday === weeklyOffWd) {
+      } else if (weeklyOffWds.includes(weekday)) {
         // Priority 2: Weekly off (override on HIGH if maxOff reached)
         if (occLevel === 'HIGH' && dailyOffCount[d] >= rules.maxOffHigh) {
           cv = primaryShift;

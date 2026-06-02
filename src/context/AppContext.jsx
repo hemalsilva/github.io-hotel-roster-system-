@@ -47,7 +47,7 @@ function reducer(state, action) {
       return { ...state, employees: action.payload };
 
     case 'ADD_EMPLOYEE': {
-      const newEmp = { ...action.payload, id: Date.now() };
+      const newEmp = { ...action.payload, id: action.payload.id || Date.now() };
       return { ...state, employees: [...state.employees, newEmp] };
     }
 

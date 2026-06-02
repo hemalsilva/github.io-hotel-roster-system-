@@ -23,7 +23,7 @@ function EmployeeRow({ emp, shiftOptions, onEdit, onDelete }) {
       <td>{emp.floorNo || '-'}</td>
       <td>{emp.section}</td>
       <td><span style={getBadgeStyle(emp.defaultShift)}>{emp.defaultShift}</span></td>
-      <td style={{ color: 'var(--text-secondary)' }}>{emp.weeklyOff}</td>
+      <td style={{ color: 'var(--text-secondary)' }}>{Array.isArray(emp.weeklyOff) ? emp.weeklyOff.join(', ') : emp.weeklyOff}</td>
       <td>
         <div style={{ display: 'flex', gap: 6 }}>
           <button className="btn btn-ghost btn-sm" onClick={() => onEdit(emp)}><Edit2 size={12} /></button>
@@ -35,9 +35,12 @@ function EmployeeRow({ emp, shiftOptions, onEdit, onDelete }) {
 }
 
 function EmployeeForm({ initial, onSave, onCancel }) {
-  const [form, setForm] = useState(initial || {
-    name: '', position: 'Room Attendant', floorNo: '', section: 'Rooms',
-    defaultShift: 'M', weeklyOff: 'Sunday',
+  const [form, setForm] = useState(initial ? {
+    ...initial,
+    weeklyOff: Array.isArray(initial.weeklyOff) ? initial.weeklyOff : [initial.weeklyOff].filter(Boolean),
+  } : {
+    id: '', name: '', position: 'Room Attendant', floorNo: '', section: 'Rooms',
+    defaultShift: 'M', weeklyOff: ['Sunday'],
   });
 
   return (
@@ -48,10 +51,17 @@ function EmployeeForm({ initial, onSave, onCancel }) {
           <button className="btn btn-ghost btn-sm" onClick={onCancel}><X size={14} /></button>
         </div>
         <div className="form-grid">
-          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-            <label className="form-label">Employee Name</label>
-            <input className="form-control" value={form.name}
-              onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+                    <div className="form-group" style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div>
+              <label className="form-label">Employee Number</label>
+              <input className="form-control" value={form.id || ''} disabled={!!initial} placeholder="e.g. 1001"
+                onChange={e => setForm(f => ({ ...f, id: e.target.value }))} />
+            </div>
+            <div>
+              <label className="form-label">Employee Name</label>
+              <input className="form-control" value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+            </div>
           </div>
           <div className="form-group">
             <label className="form-label">Position</label>
@@ -89,11 +99,23 @@ function EmployeeForm({ initial, onSave, onCancel }) {
             </select>
           </div>
           <div className="form-group">
-            <label className="form-label">Weekly Off Day</label>
-            <select className="form-control" value={form.weeklyOff}
-              onChange={e => setForm(f => ({ ...f, weeklyOff: e.target.value }))}>
-              {DAYS_OF_WEEK.map(d => <option key={d}>{d}</option>)}
-            </select>
+            <label className="form-label">Weekly Off Days</label>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
+              {DAYS_OF_WEEK.map(d => (
+                <label key={d} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontSize: 13, userSelect: 'none' }}>
+                  <input type="checkbox" checked={form.weeklyOff.includes(d)} 
+                    onChange={e => {
+                      if (e.target.checked) {
+                        setForm(f => ({ ...f, weeklyOff: [...f.weeklyOff, d] }));
+                      } else {
+                        setForm(f => ({ ...f, weeklyOff: f.weeklyOff.filter(w => w !== d) }));
+                      }
+                    }}
+                  />
+                  {d.slice(0, 3)}
+                </label>
+              ))}
+            </div>
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
@@ -120,7 +142,7 @@ export default function EmployeesPage() {
     reader.onload = (evt) => {
       try {
         const bstr = evt.target.result;
-        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wb = XLSX.read(bstr, { type: 'array' });
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
         const data = XLSX.utils.sheet_to_json(ws);
@@ -175,10 +197,10 @@ export default function EmployeesPage() {
           }, 500);
         }
       } catch (err) {
-        toast('Error parsing Excel file', 'danger');
+        console.error(err); toast('Error parsing Excel file', 'danger');
       }
     };
-    reader.readAsBinaryString(file);
+    reader.readAsArrayBuffer(file);
     e.target.value = ''; // Reset input
   }
 
@@ -264,3 +286,4 @@ export default function EmployeesPage() {
     </div>
   );
 }
+
