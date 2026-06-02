@@ -227,7 +227,15 @@ function reducer(state, action) {
 }
 
 export function AppProvider({ children }) {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const savedState = localStorage.getItem('rosterAppState');
+  const parsedState = savedState ? JSON.parse(savedState) : null;
+  const [state, dispatch] = useReducer(reducer, parsedState || initialState);
+
+  import('react').then(React => {
+    React.useEffect(() => {
+      localStorage.setItem('rosterAppState', JSON.stringify(state));
+    }, [state]);
+  });
 
   const toast = useCallback((message, type = 'info') => {
     const id = Date.now();
@@ -247,3 +255,4 @@ export function useApp() {
   if (!ctx) throw new Error('useApp must be used inside AppProvider');
   return ctx;
 }
+
