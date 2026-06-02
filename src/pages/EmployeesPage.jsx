@@ -197,7 +197,7 @@ export default function EmployeesPage() {
           }, 500);
         }
       } catch (err) {
-        console.error(err); toast('Error parsing Excel file', 'danger');
+        console.error(err); toast('Error: ' + err.message, 'danger');
       }
     };
     reader.readAsArrayBuffer(file);
@@ -286,4 +286,5 @@ export default function EmployeesPage() {
     </div>
   );
 }
+
 
